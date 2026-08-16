@@ -53,7 +53,6 @@ render as markdown in an issue.
 
 - [ ] Fill in the real CVR number and legal entity name in `site/src/data/company.ts`
 - [ ] Write real copy for Sparr, Little Beans and BeanTray (they're `TODO` placeholders — deliberately not invented)
-- [ ] Confirm the RallyRush URL
 - [ ] Rewrite the About section in your own voice
 - [ ] Create the private contact-inbox repo and deploy the Worker
 - [ ] Point the domain at Cloudflare Pages and update `site` in `astro.config.mjs`

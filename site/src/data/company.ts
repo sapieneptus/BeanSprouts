@@ -67,7 +67,7 @@ export const mission = {
   heading: "The honest version",
   body: [
     "Most studios open with a unifying vision. I don't have one, and I'd rather say that than invent one.",
-    "My projects are genuinely disconnected. A browser rally game has nothing to do with a tablet tool. What connects them isn't a market thesis — it's a way of working, and a standard I hold every one of them to.",
+    "My projects are genuinely disconnected. A tool for artists running stamp rallies at conventions has very little to do with the rest of the list. What connects them isn't a market thesis — it's a way of working, and a standard I hold every one of them to.",
   ],
 };
 
@@ -111,13 +111,12 @@ export const commitments = {
 export const projects: Project[] = [
   {
     name: "RallyRush",
-    tagline: "A top-down arcade rally game that runs in your browser.",
+    tagline: "Artist-alley stamp rallies at conventions, minus the paper.",
     description:
-      "Pick a car and a stage, then beat the clock. Drift the corners to fill the boost meter and spend it on the straights, across five biomes with changing weather. No download, no install, no account — it just runs, on desktop and mobile.",
+      "A stamp rally is a group of artists teaming up: buy something at every table, collect a stamp at each, fill the card, win the prize. It has always run on paper cards and rubber stamps coordinated over Discord. RallyRush puts the card in the shopper's browser — no app, no account — mints each stamp code fresh so a screenshotted one is worthless, and gives the organizer a live view of the whole event.",
     status: "live",
-    // TODO: confirm the canonical URL you want to send people to.
-    url: "https://rallyrush.io",
-    urlLabel: "Play it",
+    url: "https://rallyrush.app/landing",
+    urlLabel: "See how it works",
   },
   {
     name: "Sparr",
