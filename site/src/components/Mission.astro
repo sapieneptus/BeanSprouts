@@ -1,9 +1,12 @@
 ---
 import { mission, principles, commitments } from "../data/company";
+import Contours from "./Contours.astro";
 ---
 
-<section class="section section--alt" id="mission">
-  <div class="wrap">
+<section class="section section--alt mission" id="mission">
+  <Contours align="right" />
+
+  <div class="wrap mission__wrap">
     <p class="section__label">Mission</p>
     <h2 class="mission__heading">{mission.heading}</h2>
 
@@ -43,6 +46,16 @@ import { mission, principles, commitments } from "../data/company";
 </section>
 
 <style>
+  .mission {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mission__wrap {
+    position: relative;
+    z-index: 1;
+  }
+
   .mission__heading {
     max-width: 20ch;
   }

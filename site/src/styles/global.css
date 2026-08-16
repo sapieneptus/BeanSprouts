@@ -19,6 +19,15 @@
   --ring: rgba(28, 122, 78, 0.4);
   --shadow: 0 1px 2px rgba(20, 26, 22, 0.04), 0 8px 24px -12px rgba(20, 26, 22, 0.12);
 
+  /* Landscape palette — the ridgeline, sun and contour artwork. */
+  --sky: #eef5f0;
+  --sun: #e0a54e;
+  --ridge-far: #d3e2d8;
+  --ridge-mid: #a5c6b0;
+  --ridge-near: #4a8266;
+  --ridge-tree: #35604a;
+  --contour: rgba(28, 122, 78, 0.11);
+
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
@@ -54,6 +63,15 @@
     --accent-contrast: #08120c;
     --ring: rgba(92, 203, 141, 0.45);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 28px -14px rgba(0, 0, 0, 0.7);
+    --sky: #101a16;
+    --sun: #c28a44;
+    --ridge-far: #17241f;
+    --ridge-mid: #1f3329;
+    --ridge-near: #2c4a3a;
+    /* Lighter than the ridge it stands on — in the dark palette a darker
+       treeline disappears into the hillside. */
+    --ridge-tree: #3d6650;
+    --contour: rgba(92, 203, 141, 0.1);
     color-scheme: dark;
   }
 }

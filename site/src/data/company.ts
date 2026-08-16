@@ -55,19 +55,21 @@ export const company = {
  */
 export const hero = {
   eyebrow: `Independent software studio · ${company.country}`,
-  heading: "Software I'd actually want to use.",
-  lede: `${company.name} is a small studio building focused, uncomplicated software. The projects don't share a market or a category — they share a standard. Each one starts from a problem I ran into myself, and gets built simply enough that it doesn't need explaining.`,
+  heading: "Software for small, focused problems.",
+  lede: `${company.name} is a one-person studio. I build for problems that matter enormously to the people who have them and are far too specific for anyone large to serve properly. Each one starts from something I ran into myself, and gets built simply enough that it doesn't need explaining.`,
 };
 
 /**
- * The mission section. Deliberately opens by admitting there is no grand
- * unifying vision, because there isn't one — and saying so is the point.
+ * The mission section. States the actual thesis — small, specific problems —
+ * and is upfront that the projects themselves look unrelated, because they are.
  */
 export const mission = {
-  heading: "The honest version",
+  heading: "Small problems, taken seriously",
   body: [
-    "Most studios open with a unifying vision. I don't have one, and I'd rather say that than invent one.",
-    "My projects are genuinely disconnected. A tool for artists running stamp rallies at conventions has very little to do with the rest of the list. What connects them isn't a market thesis — it's a way of working, and a standard I hold every one of them to.",
+    "Most studios open with a sweeping vision. Mine is narrower than that, and I'd rather state it plainly than dress it up.",
+    "I build software for small, focused problems. Not small as in unimportant — small as in specific. A stamp rally at a convention is a real headache for the people running one, and a rounding error to anyone with a boardroom. Those problems get ignored precisely because they're small, and being small myself is exactly what lets me take them seriously.",
+    "Where something comparable already exists at scale, the bet is simple: a tool built for one niche beats a general one stretched to cover it.",
+    "So the projects look unrelated, and they are. What connects them is the size of problem I'm willing to chase, and the standard I hold every one of them to.",
   ],
 };
 
@@ -148,13 +150,56 @@ export const projects: Project[] = [
 ];
 
 /**
+ * Where you say what you actually think about AI. Specific, first-person, and
+ * committing to a line you can be held to — which is the only version of this
+ * section worth publishing.
+ */
+export const ai = {
+  heading: "Where I use AI, and where I stop",
+  lede: "It's a fair thing to want to know about any software company right now, so here's a straight answer rather than a policy page.",
+  body: [
+    "I've built software professionally for over ten years, from early-stage startups to global infrastructure. A lot of those hours went to work that was never the point: getting a button to line up, unpicking date logic, chasing an off-by-one. That's accidental complexity — difficulty that comes from the tools rather than from the problem — and I count those minutes as lost, not as craft.",
+    "So I use AI heavily for that layer, on purpose. What it doesn't get to do is decide what to build, who it's for, or whether it's good enough to ship.",
+  ],
+  stances: [
+    {
+      verdict: "yes" as const,
+      label: "Where AI helps",
+      title: "The accidental complexity",
+      body: "Alignment, boilerplate, date arithmetic, the off-by-one. Necessary work, but not the work that makes a product good. Handing it off buys back the hours that go into the parts that do.",
+    },
+    {
+      verdict: "no" as const,
+      label: "Where I decide",
+      title: "Judgment and direction",
+      body: "What's worth building, who it's for, and whether it's ready. Those are the high-value calls, and they're the ones I'm accountable for. Nothing ships because a model said it was fine.",
+    },
+    {
+      verdict: "line" as const,
+      label: "Where it stops",
+      title: "Art that goes to market",
+      body: "This is the hard line. Generative tools are genuinely good for prototyping — a rough visual tells you more about whether a screen works than a grey box does. But the prototype is where it stops. Anything visual that reaches a customer is commissioned from a real artist, working in their own style, with my mock-up as a brief and nothing more.",
+    },
+  ],
+  closing:
+    "If you ever think something I've shipped falls on the wrong side of that line, tell me.",
+};
+
+/**
  * TODO: this is a sketch in your voice, not a biography. Rewrite it as yourself —
  * the more specific and personal it is, the better it does its job.
  */
 export const about = {
   heading: "About",
+  /**
+   * Drop a photo at site/public/portrait.jpg (square, ~600×600) and set this to
+   * "/portrait.jpg". A real face does more for trust than anything else on the
+   * page. Left empty, the ridgeline motif stands in.
+   */
+  portrait: "",
+  portraitAlt: `${company.founder.name}, founder of ${company.name}`,
   body: [
-    `I'm ${company.founder.name}, and ${company.name} is me. There's no team behind the "we" because there isn't a "we" — it's one person who has been building software for a long time and wanted to build some of it properly, on his own terms.`,
+    `I'm ${company.founder.name}, and ${company.name} is me. There's no team behind the "we" because there isn't a "we" — it's one person who has been building software for a long time and wanted to build some of it properly, on my own terms.`,
     "That means the products come out slower than they would elsewhere. It also means there's nobody to ask me to add tracking, or to make cancelling harder, or to ship something before it's ready. The trade seems worth it.",
     "If you're wondering whether something here would work for you, ask me directly. You'll get a real answer from the person who built it.",
   ],
@@ -175,6 +220,7 @@ export const contact = {
 export const nav = [
   { href: "#mission", label: "Mission" },
   { href: "#projects", label: "Projects" },
+  { href: "#ai", label: "On AI" },
   { href: "#about", label: "About" },
   { href: "#contact", label: "Contact" },
 ];

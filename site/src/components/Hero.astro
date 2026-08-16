@@ -1,5 +1,6 @@
 ---
 import { hero, projects } from "../data/company";
+import Ridgeline from "./Ridgeline.astro";
 
 const liveCount = projects.filter((p) => p.status === "live").length;
 const buildingCount = projects.length - liveCount;
@@ -22,13 +23,17 @@ const buildingCount = projects.length - liveCount;
       {buildingCount} in development
     </p>
   </div>
+
+  <Ridgeline />
 </section>
 
 <style>
   .hero {
     position: relative;
-    padding-block: clamp(4.5rem, 11vw, 9rem) clamp(3.5rem, 8vw, 6rem);
+    /* Bottom padding clears the ridgeline so text never sits on the mountains. */
+    padding-block: clamp(4rem, 10vw, 8rem) clamp(11rem, 23vw, 18rem);
     overflow: hidden;
+    background: linear-gradient(to bottom, var(--bg) 40%, var(--sky));
   }
 
   /* Soft accent wash behind the headline — decorative only. */

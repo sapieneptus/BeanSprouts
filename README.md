@@ -10,9 +10,19 @@ workers/contact/   Cloudflare Worker: contact form → GitHub issues
 
 ## Website
 
-Single-page site covering the mission, principles, projects, about, and a
-contact form. All copy lives in one file — [`site/src/data/company.ts`](site/src/data/company.ts) —
-so changing what the site says never means editing markup.
+Single-page site covering the mission, principles, projects, an AI-usage
+statement, about, and a contact form. All copy lives in one file —
+[`site/src/data/company.ts`](site/src/data/company.ts) — so changing what the
+site says never means editing markup.
+
+### Artwork
+
+The ridgeline, contour lines and portrait placeholder are hand-authored SVG
+rather than photography or generated imagery. They recolour with the theme, add
+no network requests, stay sharp at any size, and — given the position stated in
+the site's own AI section — aren't generated art standing in for commissioned
+art. Swapping in commissioned illustration or your own photography is a drop-in
+replacement: see `Ridgeline.astro`, `Contours.astro`, and `about.portrait`.
 
 ```sh
 cd site
@@ -54,6 +64,8 @@ render as markdown in an issue.
 - [ ] Fill in the real CVR number and legal entity name in `site/src/data/company.ts`
 - [ ] Write real copy for Sparr, Little Beans and BeanTray (they're `TODO` placeholders — deliberately not invented)
 - [ ] Rewrite the About section in your own voice
+- [ ] Add a photo at `site/public/portrait.jpg` and set `about.portrait` — a real face does more for trust than anything else on the page
+- [ ] Read the AI section closely; it commits you to a line in public, so it should be exactly your position
 - [ ] Create the private contact-inbox repo and deploy the Worker
 - [ ] Point the domain at Cloudflare Pages and update `site` in `astro.config.mjs`
 
