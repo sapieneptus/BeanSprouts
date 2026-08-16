@@ -1,0 +1,2 @@
+# Copy to .dev.vars for local `wrangler dev`. .dev.vars is gitignored.
+GITHUB_TOKEN="github_pat_replace_me"

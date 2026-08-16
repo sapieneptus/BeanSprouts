@@ -1,0 +1,53 @@
+---
+import { about, company } from "../data/company";
+---
+
+<section class="section section--alt" id="about">
+  <div class="wrap about__inner">
+    <div class="about__intro">
+      <p class="section__label">About</p>
+      <h2>{about.heading}</h2>
+    </div>
+
+    <div class="prose about__body">
+      {about.body.map((paragraph) => <p>{paragraph}</p>)}
+      <p class="about__signoff">
+        — {company.founder.name}, <span>{company.name}</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about__inner {
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  @media (min-width: 52em) {
+    .about__inner {
+      grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.4fr);
+      gap: 3.5rem;
+    }
+  }
+
+  .about__intro h2 {
+    margin-top: 0;
+  }
+
+  .about__body {
+    max-width: 62ch;
+  }
+
+  .about__signoff {
+    margin-top: 0.5rem;
+    color: var(--text);
+    font-size: var(--step-0);
+    font-weight: 560;
+  }
+
+  .about__signoff span {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+</style>
