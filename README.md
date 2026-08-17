@@ -32,18 +32,15 @@ npm run build    # → site/dist
 npm run check    # typecheck
 ```
 
-### Deploying to Cloudflare Pages
+### Deploying
 
-| Setting | Value |
-|---|---|
-| Root directory | `site` |
-| Build command | `npm run build` |
-| Output directory | `dist` |
-| Environment variable | `PUBLIC_CONTACT_ENDPOINT` = your Worker URL |
+Full runbook: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — domain, Pages
+project, Worker, token, and a verification checklist, in order.
 
-If `PUBLIC_CONTACT_ENDPOINT` is unset the site still builds and deploys — the
-contact section degrades to a plain email link instead of rendering a form that
-can't submit.
+The short version: Cloudflare Pages, root directory `site`, build `npm run
+build`, output `dist`, with `PUBLIC_CONTACT_ENDPOINT` set to the Worker URL. If
+that variable is unset the site still builds — the contact section degrades to a
+plain email link rather than rendering a form that can't submit.
 
 Security headers are set in [`site/public/_headers`](site/public/_headers), which
 Cloudflare Pages applies automatically.
