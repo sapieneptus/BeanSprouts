@@ -77,6 +77,11 @@ npm install
 npx wrangler login
 ```
 
+> Working in a Codespace or dev container? `wrangler login` needs a browser
+> callback that won't reach you. See
+> [Doing this from a Codespace](#doing-this-from-a-codespace-or-dev-container)
+> for the API-token route instead.
+
 Edit [`wrangler.toml`](../workers/contact/wrangler.toml):
 
 - `ALLOWED_ORIGIN` — your real site origin, no trailing slash
@@ -192,3 +197,75 @@ GITHUB_TOKEN`, redeploy the Worker, then revoke the old token.
 | Submissions silently succeed but no issue appears | You tripped a bot trap — the Worker fakes success for a filled honeypot or a sub-2.5s submit. Fill the form like a person |
 | Build fails on Cloudflare, works locally | Root directory isn't `site`, or Node version differs. Set `NODE_VERSION=20` in the Pages env vars |
 | Rate limit never triggers | The KV namespace isn't bound. Without it the Worker runs fine but doesn't throttle |
+
+---
+
+## Doing this from a Codespace or dev container
+
+Almost all of it, yes. The split is clean:
+
+**Browser, one-time, unavoidable (~15 minutes of clicking):**
+
+1. **Registrar** — point your domain's nameservers at Cloudflare. Nothing to do
+   with Cloudflare's tooling; it's your registrar's control panel.
+2. **Cloudflare dashboard** — create an API token so the CLI can authenticate
+   without a browser (see below).
+3. **GitHub** — create the fine-grained PAT for the inbox repo (step 3 above).
+4. **Cloudflare dashboard** — connect the Pages project to this Git repo, and
+   add the custom domain. `wrangler pages project create` exists but can't set
+   up the Git connection or attach a domain.
+
+**CLI, from inside the container — everything else:**
+
+```sh
+npm install && npm run build          # site
+npx wrangler kv namespace create RATE_LIMIT
+npx wrangler secret put GITHUB_TOKEN
+npx wrangler deploy                   # worker
+```
+
+### Authenticating without a browser
+
+`wrangler login` runs an OAuth flow that redirects to `localhost`. In a
+container that callback lands inside the container, not in your browser.
+Codespaces port-forwarding sometimes rescues this; don't rely on it.
+
+Use an API token instead — wrangler picks it up from the environment and never
+opens a browser:
+
+```sh
+export CLOUDFLARE_API_TOKEN="..."
+npx wrangler whoami        # confirms it worked
+```
+
+Create it at **Cloudflare dashboard → My Profile → API Tokens → Create Token**,
+starting from the **Edit Cloudflare Workers** template. That covers Workers
+Scripts and KV. Add **Zone → Workers Routes → Edit** for your domain if you're
+binding the Worker to a route (step 5).
+
+Store it as a Codespace secret rather than in your shell history. **Don't paste
+it into an AI coding session** — including this one. It's an account-level
+credential; it belongs in your own environment only.
+
+### Previewing the site in a container
+
+Astro's dev server binds to localhost by default, which a forwarded port can't
+reach. Bind it to all interfaces:
+
+```sh
+npm run dev -- --host
+```
+
+Codespaces will offer to forward port 4321.
+
+### Git-connected Pages vs. direct upload
+
+`wrangler pages deploy dist` works entirely from the CLI and skips the
+dashboard. It's tempting if you want zero clicking — but it means either
+deploying by hand every time, or adding a GitHub Actions workflow and storing a
+Cloudflare token in GitHub secrets, which is one more credential to rotate
+forever.
+
+**Connecting Pages to Git in the dashboard costs about two minutes, once, and
+then it's push-to-deploy with no token to manage.** For lowest total overhead,
+click the two minutes.
