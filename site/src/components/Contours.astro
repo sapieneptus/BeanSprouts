@@ -1,0 +1,53 @@
+---
+/**
+ * Topographic contour lines — a quiet background texture for section artwork.
+ * Nested rings of one irregular blob, the way elevation reads on a survey map.
+ */
+interface Props {
+  /** Corner to anchor the artwork to. */
+  align?: "left" | "right";
+  class?: string;
+}
+
+const { align = "right", class: className = "" } = Astro.props;
+const rings = [1, 0.84, 0.69, 0.55, 0.42, 0.3, 0.19];
+---
+
+<div class:list={["contours", `contours--${align}`, className]} aria-hidden="true">
+  <svg viewBox="-200 -160 400 320" role="presentation">
+    <g fill="none" stroke="var(--contour)" stroke-width="1.4">
+      {rings.map((scale) => (
+        <path
+          transform={`scale(${scale})`}
+          vector-effect="non-scaling-stroke"
+          d="M-160,-22 C-150,-92 -58,-122 22,-106 C102,-90 160,-42 156,18 C152,78 78,116 -2,110 C-82,104 -170,52 -160,-22 Z"
+        />
+      ))}
+    </g>
+  </svg>
+</div>
+
+<style>
+  .contours {
+    position: absolute;
+    top: 50%;
+    width: min(46rem, 70%);
+    aspect-ratio: 5 / 4;
+    translate: 0 -50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .contours--right {
+    right: -12%;
+  }
+
+  .contours--left {
+    left: -14%;
+  }
+
+  .contours svg {
+    width: 100%;
+    height: 100%;
+  }
+</style>

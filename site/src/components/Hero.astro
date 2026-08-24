@@ -1,0 +1,102 @@
+---
+import { hero, projects } from "../data/company";
+import Ridgeline from "./Ridgeline.astro";
+
+const liveCount = projects.filter((p) => p.status === "live").length;
+const buildingCount = projects.length - liveCount;
+---
+
+<section class="hero" id="top">
+  <div class="wrap hero__inner">
+    <p class="hero__eyebrow">{hero.eyebrow}</p>
+    <h1 class="hero__heading">{hero.heading}</h1>
+    <p class="hero__lede">{hero.lede}</p>
+
+    <div class="hero__actions">
+      <a class="btn btn--primary" href="#projects">See the projects</a>
+      <a class="btn btn--ghost" href="#mission">What I stand for</a>
+    </div>
+
+    <p class="hero__meta">
+      <span class="hero__dot" aria-hidden="true"></span>
+      {liveCount} {liveCount === 1 ? "product" : "products"} live ·
+      {buildingCount} in development
+    </p>
+  </div>
+
+  <Ridgeline />
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    /* Bottom padding clears the ridgeline so text never sits on the mountains. */
+    padding-block: clamp(4rem, 10vw, 8rem) clamp(11rem, 23vw, 18rem);
+    overflow: hidden;
+    background: linear-gradient(to bottom, var(--bg) 40%, var(--sky));
+  }
+
+  /* Soft accent wash behind the headline — decorative only. */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: -30% 0 auto -10%;
+    height: 70%;
+    background: radial-gradient(
+      55% 60% at 20% 40%,
+      var(--accent-soft) 0%,
+      transparent 70%
+    );
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  .hero__inner {
+    position: relative;
+    display: grid;
+    gap: 1.35rem;
+    justify-items: start;
+  }
+
+  .hero__eyebrow {
+    font-size: var(--step-sm);
+    font-weight: 560;
+    color: var(--accent);
+    letter-spacing: 0.01em;
+  }
+
+  .hero__heading {
+    max-width: 17ch;
+  }
+
+  .hero__lede {
+    max-width: 56ch;
+    font-size: var(--step-1);
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 0.5rem;
+  }
+
+  .hero__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-size: var(--step-sm);
+    color: var(--text-muted);
+  }
+
+  .hero__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+</style>

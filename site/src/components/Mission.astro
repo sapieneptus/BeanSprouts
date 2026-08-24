@@ -1,0 +1,169 @@
+---
+import { mission, principles, commitments } from "../data/company";
+import Contours from "./Contours.astro";
+---
+
+<section class="section section--alt mission" id="mission">
+  <Contours align="right" />
+
+  <div class="wrap mission__wrap">
+    <p class="section__label">Mission</p>
+    <h2 class="mission__heading">{mission.heading}</h2>
+
+    <div class="prose mission__body">
+      {mission.body.map((paragraph) => <p>{paragraph}</p>)}
+    </div>
+
+    <ol class="principles">
+      {principles.map((principle, i) => (
+        <li class="principle">
+          <span class="principle__num" aria-hidden="true">
+            {String(i + 1).padStart(2, "0")}
+          </span>
+          <h3 class="principle__title">{principle.title}</h3>
+          <p class="principle__body">{principle.body}</p>
+        </li>
+      ))}
+    </ol>
+
+    <div class="commitments">
+      <div class="commitments__head">
+        <h3 class="commitments__heading">{commitments.heading}</h3>
+        <p class="commitments__intro">{commitments.intro}</p>
+      </div>
+      <ul class="commitments__list">
+        {commitments.items.map((item) => (
+          <li>
+            <svg class="commitments__check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m4 10.5 4 4 8-9" />
+            </svg>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .mission {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mission__wrap {
+    position: relative;
+    z-index: 1;
+  }
+
+  .mission__heading {
+    max-width: 20ch;
+  }
+
+  .mission__body {
+    margin-top: 1.5rem;
+  }
+
+  .principles {
+    display: grid;
+    gap: 1rem;
+    margin: clamp(2.5rem, 5vw, 3.75rem) 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: none;
+  }
+
+  @media (min-width: 40em) {
+    .principles {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.15rem;
+    }
+  }
+
+  .principle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.6rem 1.5rem;
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+  }
+
+  .principle__num {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .principle__title {
+    letter-spacing: -0.018em;
+  }
+
+  .principle__body {
+    color: var(--text-muted);
+    font-size: var(--step-sm);
+    line-height: 1.62;
+  }
+
+  .commitments {
+    margin-top: clamp(2.5rem, 5vw, 3.75rem);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: clamp(1.6rem, 3.5vw, 2.5rem);
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  @media (min-width: 52em) {
+    .commitments {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 2.5rem;
+    }
+  }
+
+  .commitments__head {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+
+  .commitments__heading {
+    font-size: var(--step-2);
+    letter-spacing: -0.022em;
+  }
+
+  .commitments__intro {
+    color: var(--text-muted);
+    font-size: var(--step-sm);
+    line-height: 1.62;
+  }
+
+  .commitments__list {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .commitments__list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    font-size: var(--step-sm);
+    line-height: 1.55;
+  }
+
+  .commitments__check {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.15rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+</style>

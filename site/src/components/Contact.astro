@@ -1,0 +1,370 @@
+---
+import { contact, company } from "../data/company";
+
+const endpoint = contact.endpoint;
+const hasEndpoint = endpoint.length > 0;
+---
+
+<section class="section section--alt" id="contact">
+  <div class="wrap contact__inner">
+    <div class="contact__intro">
+      <p class="section__label">Contact</p>
+      <h2>{contact.heading}</h2>
+      <p class="contact__lede">{contact.lede}</p>
+      <p class="contact__direct">
+        Prefer email? <a href={`mailto:${company.email}`}>{company.email}</a>
+      </p>
+    </div>
+
+    <div class="contact__panel">
+      {hasEndpoint ? (
+        <form id="contact-form" class="form" data-endpoint={endpoint} novalidate>
+          <div class="form__row">
+            <div class="field">
+              <label for="cf-name">Name</label>
+              <input
+                id="cf-name"
+                name="name"
+                type="text"
+                autocomplete="name"
+                maxlength="100"
+                required
+              />
+            </div>
+            <div class="field">
+              <label for="cf-email">Email</label>
+              <input
+                id="cf-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                maxlength="254"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="cf-topic">Topic</label>
+            <select id="cf-topic" name="topic">
+              <option value="general">General enquiry</option>
+              <option value="product">Question about a product</option>
+              <option value="bug">Bug report</option>
+              <option value="idea">Idea or feature request</option>
+              <option value="business">Business or partnership</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="cf-message">Message</label>
+            <textarea
+              id="cf-message"
+              name="message"
+              rows="6"
+              maxlength="5000"
+              required
+            ></textarea>
+            <p class="field__hint">
+              <span id="cf-count">0</span>/5000
+            </p>
+          </div>
+
+          <!-- Honeypot: hidden from people, irresistible to naive bots. -->
+          <div class="honeypot" aria-hidden="true">
+            <label for="cf-website">Website</label>
+            <input id="cf-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <button id="cf-submit" class="btn btn--primary form__submit" type="submit">
+            Send message
+          </button>
+
+          <p id="cf-status" class="form__status" role="status" aria-live="polite"></p>
+
+          <p class="form__privacy">
+            Your message and email go to a private issue tracker so I can keep
+            track of replies. They aren't shared with anyone else, used for
+            marketing, or added to a mailing list.
+          </p>
+        </form>
+      ) : (
+        <div class="form form--fallback">
+          <p>
+            The contact form isn't wired up in this build. Email me directly at
+            <a href={`mailto:${company.email}`}>{company.email}</a> and I'll get
+            back to you.
+          </p>
+          <p class="form__privacy">
+            To enable the form, deploy <code>workers/contact</code> and set
+            <code>PUBLIC_CONTACT_ENDPOINT</code> at build time.
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact__inner {
+    display: grid;
+    gap: 2.25rem;
+    align-items: start;
+  }
+
+  @media (min-width: 54em) {
+    .contact__inner {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 3.5rem;
+    }
+  }
+
+  .contact__intro {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+
+  .contact__lede {
+    color: var(--text-muted);
+    font-size: var(--step-1);
+    line-height: 1.6;
+    max-width: 40ch;
+  }
+
+  .contact__direct {
+    font-size: var(--step-sm);
+    color: var(--text-muted);
+  }
+
+  .form {
+    display: grid;
+    gap: 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: clamp(1.5rem, 3.5vw, 2.25rem);
+    box-shadow: var(--shadow);
+  }
+
+  .form--fallback {
+    gap: 0.85rem;
+    color: var(--text-muted);
+    font-size: var(--step-sm);
+  }
+
+  .form__row {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  @media (min-width: 30em) {
+    .form__row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .field {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .field label {
+    font-size: var(--step-sm);
+    font-weight: 580;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    font: inherit;
+    font-size: var(--step-sm);
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.8rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 8rem;
+    line-height: 1.6;
+  }
+
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .field textarea:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--ring);
+  }
+
+  .field :global(input[aria-invalid="true"]),
+  .field :global(textarea[aria-invalid="true"]) {
+    border-color: #c8442f;
+  }
+
+  .field__hint {
+    justify-self: end;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .honeypot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .form__submit {
+    justify-self: start;
+    margin-top: 0.25rem;
+  }
+
+  .form__status {
+    font-size: var(--step-sm);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .form__status:empty {
+    display: none;
+  }
+
+  .form__status[data-state="error"] {
+    color: #c8442f;
+  }
+
+  .form__status[data-state="success"] {
+    color: var(--accent);
+    font-weight: 560;
+  }
+
+  .form__privacy {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin: 0;
+  }
+
+  .form__privacy code {
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+    background: var(--bg-alt);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+  }
+</style>
+
+<script>
+  const form = document.getElementById("contact-form") as HTMLFormElement | null;
+
+  if (form) {
+    const endpoint = form.dataset.endpoint ?? "";
+    const submit = document.getElementById("cf-submit") as HTMLButtonElement;
+    const status = document.getElementById("cf-status") as HTMLParagraphElement;
+    const message = document.getElementById("cf-message") as HTMLTextAreaElement;
+    const count = document.getElementById("cf-count") as HTMLSpanElement;
+    // Bots fill forms instantly; people don't. The worker rejects anything
+    // submitted implausibly fast.
+    const loadedAt = Date.now();
+
+    message.addEventListener("input", () => {
+      count.textContent = String(message.value.length);
+    });
+
+    const setStatus = (text: string, state: "error" | "success" | "") => {
+      status.textContent = text;
+      if (state) {
+        status.dataset.state = state;
+      } else {
+        delete status.dataset.state;
+      }
+    };
+
+    const markInvalid = (field: HTMLElement | null, invalid: boolean) => {
+      if (!field) return;
+      if (invalid) field.setAttribute("aria-invalid", "true");
+      else field.removeAttribute("aria-invalid");
+    };
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const data = new FormData(form);
+      const name = String(data.get("name") ?? "").trim();
+      const email = String(data.get("email") ?? "").trim();
+      const body = String(data.get("message") ?? "").trim();
+
+      markInvalid(form.elements.namedItem("name") as HTMLElement, !name);
+      markInvalid(
+        form.elements.namedItem("email") as HTMLElement,
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+      );
+      markInvalid(form.elements.namedItem("message") as HTMLElement, body.length < 10);
+
+      if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || body.length < 10) {
+        setStatus(
+          "Please add your name, a valid email, and a message of at least 10 characters.",
+          "error",
+        );
+        return;
+      }
+
+      submit.disabled = true;
+      submit.textContent = "Sending…";
+      setStatus("", "");
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            topic: String(data.get("topic") ?? "general"),
+            message: body,
+            website: String(data.get("website") ?? ""),
+            elapsedMs: Date.now() - loadedAt,
+          }),
+        });
+
+        if (response.ok) {
+          form.reset();
+          count.textContent = "0";
+          setStatus(
+            "Thanks — your message reached me. I'll reply to the address you gave.",
+            "success",
+          );
+          submit.textContent = "Sent";
+          return;
+        }
+
+        const detail = await response.json().catch(() => null);
+        setStatus(
+          detail?.error ??
+            "That didn't go through. Please try again, or email me directly.",
+          "error",
+        );
+      } catch {
+        setStatus(
+          "Couldn't reach the server. Please check your connection, or email me directly.",
+          "error",
+        );
+      } finally {
+        if (submit.textContent !== "Sent") {
+          submit.disabled = false;
+          submit.textContent = "Send message";
+        }
+      }
+    });
+  }
+</script>
