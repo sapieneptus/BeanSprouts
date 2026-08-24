@@ -17,6 +17,27 @@ anything with no matching file (`/api/contact`) falls through to the script in
 `site/worker/`. The form is therefore same-origin by construction — no second
 Worker, no route binding, no third-party endpoint in the page source.
 
+### Why a Worker and not Pages
+
+Cloudflare Pages still exists and would serve this site fine. The create flow is
+reachable, but only via subscript links buried under the Workers wizard — new
+projects are steered to Workers, which says plainly enough where the investment
+is going.
+
+Given that, a Worker with static assets is the better bet, and it happens to be
+less setup rather than more:
+
+| | Pages | This |
+|---|---|---|
+| Cloudflare projects | 2 (site + contact Worker) | 1 |
+| Deploy steps | 2 | 1 |
+| Worker route binding | needed, to make the form same-origin | none |
+| Build-time env vars | `PUBLIC_CONTACT_ENDPOINT` | none |
+
+If you'd rather be on Pages, the site half is portable — `site/dist` is plain
+static output with no Worker dependency. You'd split the contact endpoint back
+out into its own Worker and bind it to a route.
+
 ## What you need first
 
 - A Cloudflare account (free tier is enough).
