@@ -41,8 +41,11 @@ export const company = {
   /** Used for page metadata and social previews. */
   metaDescription:
     "BeanSprouts is a small independent software studio in Denmark, building simple, honest, human-focused software to solve real problems.",
-  /** TODO: confirm this is the address you want published. */
-  email: "chris@chrisf.io",
+  /**
+   * No email address is published anywhere on the site, on purpose — a
+   * scrapeable mailto: is a spam magnet. The contact form is the only route
+   * in, and it delivers to a private issue tracker. Don't reintroduce one.
+   */
   founder: {
     /** TODO: full name as you'd like it to appear. */
     name: "Chris",
@@ -212,9 +215,10 @@ export const contact = {
   lede: "Questions, bug reports, ideas, or just to say hello — this goes straight to me, and I read everything.",
   /**
    * The Cloudflare Worker that receives the form. Set PUBLIC_CONTACT_ENDPOINT in
-   * your Cloudflare Pages build settings. Empty means the form falls back to a
-   * plain mailto: link, so the page is never broken — just less convenient.
-   * See /workers/contact for deployment.
+   * your Cloudflare Pages build settings. Empty means the contact panel says so
+   * rather than rendering a form that posts nowhere — and since no email
+   * address is published, that build leaves visitors no way to reach you, so
+   * treat an empty endpoint as a broken deploy. See /workers/contact.
    */
   endpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT ?? "",
 };

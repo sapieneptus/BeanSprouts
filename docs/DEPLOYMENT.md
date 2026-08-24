@@ -30,7 +30,6 @@ Edit [`site/src/data/company.ts`](../site/src/data/company.ts):
 
 - `company.legalName` — registered entity name
 - `company.cvr` — your real CVR number (currently `00000000`)
-- `company.email` — confirm this is the address you want published
 - `company.founder.name` — full name as you want it shown
 - The `TODO` blocks on Sparr, Little Beans and BeanTray
 - `about.body` — rewrite in your own voice

@@ -1,5 +1,5 @@
 ---
-import { contact, company } from "../data/company";
+import { contact } from "../data/company";
 
 const endpoint = contact.endpoint;
 const hasEndpoint = endpoint.length > 0;
@@ -11,9 +11,6 @@ const hasEndpoint = endpoint.length > 0;
       <p class="section__label">Contact</p>
       <h2>{contact.heading}</h2>
       <p class="contact__lede">{contact.lede}</p>
-      <p class="contact__direct">
-        Prefer email? <a href={`mailto:${company.email}`}>{company.email}</a>
-      </p>
     </div>
 
     <div class="contact__panel">
@@ -30,6 +27,7 @@ const hasEndpoint = endpoint.length > 0;
                 maxlength="100"
                 required
               />
+              <p id="cf-name-error" class="field__error" role="alert"></p>
             </div>
             <div class="field">
               <label for="cf-email">Email</label>
@@ -41,6 +39,7 @@ const hasEndpoint = endpoint.length > 0;
                 maxlength="254"
                 required
               />
+              <p id="cf-email-error" class="field__error" role="alert"></p>
             </div>
           </div>
 
@@ -61,11 +60,12 @@ const hasEndpoint = endpoint.length > 0;
               id="cf-message"
               name="message"
               rows="6"
-              maxlength="5000"
+              maxlength="2000"
               required
             ></textarea>
-            <p class="field__hint">
-              <span id="cf-count">0</span>/5000
+            <p id="cf-message-error" class="field__error" role="alert"></p>
+            <p id="cf-message-hint" class="field__hint">
+              <span id="cf-count">0</span>/2000
             </p>
           </div>
 
@@ -90,9 +90,8 @@ const hasEndpoint = endpoint.length > 0;
       ) : (
         <div class="form form--fallback">
           <p>
-            The contact form isn't wired up in this build. Email me directly at
-            <a href={`mailto:${company.email}`}>{company.email}</a> and I'll get
-            back to you.
+            The contact form isn't wired up in this build, so there's no way to
+            reach me from this page right now. Sorry — please try again shortly.
           </p>
           <p class="form__privacy">
             To enable the form, deploy <code>workers/contact</code> and set
@@ -129,11 +128,6 @@ const hasEndpoint = endpoint.length > 0;
     font-size: var(--step-1);
     line-height: 1.6;
     max-width: 40ch;
-  }
-
-  .contact__direct {
-    font-size: var(--step-sm);
-    color: var(--text-muted);
   }
 
   .form {
@@ -213,6 +207,23 @@ const hasEndpoint = endpoint.length > 0;
     font-variant-numeric: tabular-nums;
   }
 
+  .field__hint[data-state="near-limit"] {
+    color: #c8442f;
+  }
+
+  /* Inline, per-field, and only rendered once there's something to say — an
+     empty slot must not reserve space or the form jumps as errors appear. */
+  .field__error {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: #c8442f;
+    margin: 0;
+  }
+
+  .field__error:empty {
+    display: none;
+  }
+
   .honeypot {
     position: absolute;
     width: 1px;
@@ -271,15 +282,103 @@ const hasEndpoint = endpoint.length > 0;
     const endpoint = form.dataset.endpoint ?? "";
     const submit = document.getElementById("cf-submit") as HTMLButtonElement;
     const status = document.getElementById("cf-status") as HTMLParagraphElement;
-    const message = document.getElementById("cf-message") as HTMLTextAreaElement;
     const count = document.getElementById("cf-count") as HTMLSpanElement;
+    const messageHint = document.getElementById("cf-message-hint") as HTMLElement;
     // Bots fill forms instantly; people don't. The worker rejects anything
     // submitted implausibly fast.
     const loadedAt = Date.now();
 
-    message.addEventListener("input", () => {
-      count.textContent = String(message.value.length);
+    // Kept in step with LIMITS in workers/contact/src/index.ts. The worker is
+    // the authority; these exist so nobody has to round-trip to learn they
+    // typed one character too few.
+    const MIN_MESSAGE = 10;
+    const MAX_MESSAGE = 2000;
+    const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    interface Field {
+      input: HTMLInputElement | HTMLTextAreaElement;
+      error: HTMLElement;
+      /** Ids that stay in aria-describedby whether or not there's an error. */
+      describedBy: string[];
+      validate: (value: string) => string;
+      /** Errors stay hidden until the visitor leaves the field, or submits. */
+      touched: boolean;
+    }
+
+    const field = (
+      id: string,
+      validate: (value: string) => string,
+      describedBy: string[] = [],
+    ): Field => ({
+      input: document.getElementById(id) as HTMLInputElement,
+      error: document.getElementById(`${id}-error`) as HTMLElement,
+      describedBy,
+      validate,
+      touched: false,
     });
+
+    const fields: Field[] = [
+      field("cf-name", (value) => (value ? "" : "Please tell me your name.")),
+      field("cf-email", (value) => {
+        if (!value) return "Please add an email address so I can reply.";
+        return EMAIL.test(value) ? "" : "That doesn't look like an email address.";
+      }),
+      field(
+        "cf-message",
+        (value) => {
+          if (!value) return "Please write a message.";
+          if (value.length < MIN_MESSAGE) {
+            return `A little more, please — at least ${MIN_MESSAGE} characters.`;
+          }
+          if (value.length > MAX_MESSAGE) {
+            return `That's ${value.length - MAX_MESSAGE} characters over the limit.`;
+          }
+          return "";
+        },
+        ["cf-message-hint"],
+      ),
+    ];
+
+    const message = fields[2].input as HTMLTextAreaElement;
+
+    const showError = (target: Field, error: string) => {
+      target.error.textContent = error;
+
+      const ids = error ? [...target.describedBy, target.error.id] : target.describedBy;
+      if (ids.length) target.input.setAttribute("aria-describedby", ids.join(" "));
+      else target.input.removeAttribute("aria-describedby");
+
+      if (error) target.input.setAttribute("aria-invalid", "true");
+      else target.input.removeAttribute("aria-invalid");
+    };
+
+    /** Returns validity; only *shows* the problem once the field is touched. */
+    const check = (target: Field): boolean => {
+      const error = target.validate(target.input.value.trim());
+      showError(target, target.touched ? error : "");
+      return !error;
+    };
+
+    for (const target of fields) {
+      // Blurring a field is the visitor saying they're done with it — that's
+      // the moment to speak up, not on their third keystroke.
+      target.input.addEventListener("blur", () => {
+        target.touched = true;
+        check(target);
+      });
+      // Once they've been told, re-check live so the error clears the instant
+      // it's fixed instead of waiting for another blur.
+      target.input.addEventListener("input", () => check(target));
+    }
+
+    const updateCount = () => {
+      const { length } = message.value;
+      count.textContent = String(length);
+      if (length >= MAX_MESSAGE * 0.9) messageHint.dataset.state = "near-limit";
+      else delete messageHint.dataset.state;
+    };
+
+    message.addEventListener("input", updateCount);
 
     const setStatus = (text: string, state: "error" | "success" | "") => {
       status.textContent = text;
@@ -290,34 +389,27 @@ const hasEndpoint = endpoint.length > 0;
       }
     };
 
-    const markInvalid = (field: HTMLElement | null, invalid: boolean) => {
-      if (!field) return;
-      if (invalid) field.setAttribute("aria-invalid", "true");
-      else field.removeAttribute("aria-invalid");
-    };
-
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const data = new FormData(form);
-      const name = String(data.get("name") ?? "").trim();
-      const email = String(data.get("email") ?? "").trim();
-      const body = String(data.get("message") ?? "").trim();
+      // Inline checks have usually run by now; this catches the paths that
+      // skip them — Enter from the first box, or an autofilled form nobody
+      // ever focused.
+      let firstInvalid: Field | null = null;
+      for (const target of fields) {
+        target.touched = true;
+        if (!check(target) && !firstInvalid) firstInvalid = target;
+      }
 
-      markInvalid(form.elements.namedItem("name") as HTMLElement, !name);
-      markInvalid(
-        form.elements.namedItem("email") as HTMLElement,
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-      );
-      markInvalid(form.elements.namedItem("message") as HTMLElement, body.length < 10);
-
-      if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || body.length < 10) {
-        setStatus(
-          "Please add your name, a valid email, and a message of at least 10 characters.",
-          "error",
-        );
+      if (firstInvalid) {
+        // The errors are sitting next to the fields; a summary line would just
+        // say the same thing twice.
+        setStatus("", "");
+        firstInvalid.input.focus();
         return;
       }
+
+      const data = new FormData(form);
 
       submit.disabled = true;
       submit.textContent = "Sending…";
@@ -328,10 +420,10 @@ const hasEndpoint = endpoint.length > 0;
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name,
-            email,
+            name: String(data.get("name") ?? "").trim(),
+            email: String(data.get("email") ?? "").trim(),
             topic: String(data.get("topic") ?? "general"),
-            message: body,
+            message: String(data.get("message") ?? "").trim(),
             website: String(data.get("website") ?? ""),
             elapsedMs: Date.now() - loadedAt,
           }),
@@ -339,7 +431,11 @@ const hasEndpoint = endpoint.length > 0;
 
         if (response.ok) {
           form.reset();
-          count.textContent = "0";
+          for (const target of fields) {
+            target.touched = false;
+            showError(target, "");
+          }
+          updateCount();
           setStatus(
             "Thanks — your message reached me. I'll reply to the address you gave.",
             "success",
@@ -357,12 +453,12 @@ const hasEndpoint = endpoint.length > 0;
           : null;
         setStatus(
           detail?.error ??
-            "That didn't go through — something's wrong on my side. Please email me directly.",
+            "That didn't go through — something's wrong on my side. Please try again in a few minutes.",
           "error",
         );
       } catch {
         setStatus(
-          "Couldn't reach the server. Please check your connection, or email me directly.",
+          "Couldn't reach the server. Please check your connection and try again.",
           "error",
         );
       } finally {
