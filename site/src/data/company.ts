@@ -35,12 +35,12 @@ export const company = {
    */
   legalName: "BeanSprouts",
   /** TODO: replace with your real CVR number. */
-  cvr: "00000000",
+  cvr: "46683420",
   country: "Denmark",
   tagline: "An independent software studio.",
   /** Used for page metadata and social previews. */
   metaDescription:
-    "BeanSprouts is a small independent software studio in Denmark, building simple, focused software from real problems — with no ads, no dark patterns, and no data selling.",
+    "BeanSprouts is a small independent software studio in Denmark, building simple, honest, human-focused software to solve real problems.",
   /** TODO: confirm this is the address you want published. */
   email: "chris@chrisf.io",
   founder: {
@@ -67,7 +67,7 @@ export const mission = {
   heading: "Small problems, taken seriously",
   body: [
     "Most studios open with a sweeping vision. Mine is narrower than that, and I'd rather state it plainly than dress it up.",
-    "I build software for small, focused problems. Not small as in unimportant — small as in specific. A stamp rally at a convention is a real headache for the people running one, and a rounding error to anyone with a boardroom. Those problems get ignored precisely because they're small, and being small myself is exactly what lets me take them seriously.",
+    "I build software for small, focused problems. Not small as in unimportant: small as in specific. For example, a paper stamp rally at a convention can be a real headache for the people running one, yet nothing more than a rounding error to anyone with a boardroom."
     "Where something comparable already exists at scale, the bet is simple: a tool built for one niche beats a general one stretched to cover it.",
     "So the projects look unrelated, and they are. What connects them is the size of problem I'm willing to chase, and the standard I hold every one of them to.",
   ],
@@ -101,11 +101,11 @@ export const commitments = {
   intro:
     "Principles are easy to write. These are the specific things I commit to, so you can hold me to them:",
   items: [
-    "No ads, in any product, ever.",
+    "Protect the customer and only charge for real value",
     "Your data is never sold, rented, or shared with third-party brokers.",
     "No dark patterns. Leaving is always as easy as arriving.",
     "No account required unless the product genuinely can't work without one.",
-    "Honest status. Nothing is described as available when it isn't — everything below marked “in development” is exactly that.",
+    "Honest status. Nothing is described as available when it isn't: everything below marked “in development” is exactly that.",
     "If a product ever shuts down, you get fair notice and a way to take your data with you.",
   ],
 };
@@ -158,15 +158,17 @@ export const ai = {
   heading: "Where I use AI, and where I stop",
   lede: "It's a fair thing to want to know about any software company right now, so here's a straight answer rather than a policy page.",
   body: [
-    "I've built software professionally for over ten years, from early-stage startups to global infrastructure. A lot of those hours went to work that was never the point: getting a button to line up, unpicking date logic, chasing an off-by-one. That's accidental complexity — difficulty that comes from the tools rather than from the problem — and I count those minutes as lost, not as craft.",
+    "I've built software professionally for over ten years, from early-stage startups to global infrastructure. A lot of those hours went to work that was never the point: getting a button to line up, dealing with date arithmatic, chasing an off-by-one. That's accidental complexity; i.e. difficulty that comes from the tools rather than from the problem. I count those minutes as lost, not as craft.",
     "So I use AI heavily for that layer, on purpose. What it doesn't get to do is decide what to build, who it's for, or whether it's good enough to ship.",
+    "In terms of art and assets, the line I draw is that AI-art (both visual and audio) is a useful, high-fidelity placeholder, but final assets must be produced by a human artist before any sales are made.",
+    "I believe this balance allows me maximum development velocity while also preserving the value and economy of human artists."
   ],
   stances: [
     {
       verdict: "yes" as const,
       label: "Where AI helps",
       title: "The accidental complexity",
-      body: "Alignment, boilerplate, date arithmetic, the off-by-one. Necessary work, but not the work that makes a product good. Handing it off buys back the hours that go into the parts that do.",
+      body: "Alignment, boilerplate, date arithmetic, simple copy, generating examples from a template etc. Necessary work, but not the work that makes a product good. Handing it off buys back the hours that go into the parts that do.",
     },
     {
       verdict: "no" as const,
@@ -178,7 +180,7 @@ export const ai = {
       verdict: "line" as const,
       label: "Where it stops",
       title: "Art that goes to market",
-      body: "This is the hard line. Generative tools are genuinely good for prototyping — a rough visual tells you more about whether a screen works than a grey box does. But the prototype is where it stops. Anything visual that reaches a customer is commissioned from a real artist, working in their own style, with my mock-up as a brief and nothing more.",
+      body: "This is the hard line. Generative tools are genuinely good for prototyping; a rough visual tells you more about whether a screen works than a grey box does. But the prototype is where it stops. Anything visual that reaches a customer is commissioned from a real artist, working in their own style, with my mock-up as a brief and nothing more.",
     },
   ],
   closing:
