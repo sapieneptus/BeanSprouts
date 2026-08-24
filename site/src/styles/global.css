@@ -33,6 +33,10 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
 
+  /* Sticky header height. Anchor offsets derive from this, so the two can't
+     drift apart and leave a strip of the previous section on show. */
+  --header-h: 4rem;
+
   --measure: 65ch;
   --page-max: 68rem;
   --radius: 14px;
@@ -200,7 +204,8 @@ svg {
 
 .section {
   padding-block: clamp(4rem, 9vw, 7.5rem);
-  scroll-margin-top: 5rem;
+  /* Land flush under the header: its height plus its 1px bottom border. */
+  scroll-margin-top: calc(var(--header-h) + 1px);
 }
 
 .section--alt {

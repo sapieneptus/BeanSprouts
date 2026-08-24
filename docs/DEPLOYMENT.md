@@ -306,7 +306,7 @@ GITHUB_TOKEN`, redeploy, then revoke the old one.
 | Symptom | Cause |
 |---|---|
 | Build fails with `ENOENT ... /opt/buildhome/repo/package.json` | Root directory isn't `site` |
-| Form returns "Origin not allowed" | `ALLOWED_ORIGIN` doesn't exactly match the site origin. No trailing slash; `www.` is a different origin |
+| Form returns "Origin not allowed" | `ALLOWED_ORIGIN` doesn't match the site origin. **`[vars]` are baked in at deploy time — editing `wrangler.toml` does nothing until you deploy again.** Also check: no trailing slash, and `www.` is a separate origin. `npx wrangler tail` logs both sides of the mismatch |
 | Form returns 502 | Token expired, lost its Issues permission, or `GITHUB_REPO` is wrong. `npx wrangler tail` shows the GitHub error |
 | Submissions silently succeed but no issue appears | You tripped a bot trap — the endpoint fakes success for a filled honeypot or a sub-2.5s submit. Fill the form like a person |
 | `/api/contact` returns the 404 page | A static file is shadowing the path, or `main` isn't set in `wrangler.toml` |
