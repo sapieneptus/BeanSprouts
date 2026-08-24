@@ -7,13 +7,13 @@ workers_dev = false
 # Exact origin(s) allowed to post to this Worker. Comma-separated, no trailing
 # slash. Add your Pages preview domain here too if you want the form to work
 # on previews.
-ALLOWED_ORIGIN = "https://beansprouts.dk"
+ALLOWED_ORIGIN = "https://bean-sprouts.com"
 
 # The PRIVATE repository that receives contact submissions as issues.
 # Do not point this at a public repo — issue bodies contain sender names and
 # email addresses.
 GITHUB_OWNER = "sapieneptus"
-GITHUB_REPO = "contact-inbox"
+GITHUB_REPO = "BeanSprouts-Contact"
 
 # GITHUB_TOKEN is a secret, never a var:
 #   npx wrangler secret put GITHUB_TOKEN
