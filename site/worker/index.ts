@@ -1,14 +1,20 @@
 /**
- * Contact form → GitHub Issues.
+ * The site's Worker.
  *
- * The browser posts JSON here; this Worker validates it, throttles abuse, and
- * files an issue in a PRIVATE inbox repository. The GitHub token never leaves
- * the Worker.
+ * Static files are matched first by the assets binding, so this script only
+ * runs for paths with no matching file. That's /api/contact — the contact form
+ * endpoint — and genuine 404s.
  *
- * Deploy notes live in ../README.md.
+ * The contact endpoint validates each submission, throttles abuse, and files it
+ * as an issue in a PRIVATE inbox repository. The GitHub token never leaves the
+ * Worker.
+ *
+ * Deploy notes live in ./README.md.
  */
 
 export interface Env {
+  /** The built static site. Configured in wrangler.toml. */
+  ASSETS: Fetcher;
   /** Exact origin allowed to post, e.g. "https://bean-sprouts.com". */
   ALLOWED_ORIGIN: string;
   /** Owner of the private inbox repo. */
@@ -55,8 +61,28 @@ interface Payload {
   elapsedMs: number;
 }
 
+const CONTACT_PATH = "/api/contact";
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Anything that isn't the contact endpoint reached us because no static
+    // file matched it. Serve the site's 404 page rather than a bare string.
+    if (url.pathname !== CONTACT_PATH) {
+      const page = await env.ASSETS.fetch(new URL("/404.html", url.origin));
+      return new Response(page.body, {
+        status: 404,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+
+    return handleContact(request, env);
+  },
+};
+
+async function handleContact(request: Request, env: Env): Promise<Response> {
+  {
     const origin = request.headers.get("Origin") ?? "";
     const allowed = originAllowed(origin, env.ALLOWED_ORIGIN);
 
@@ -134,8 +160,8 @@ export default {
     }
 
     return json({ ok: true }, 200, origin);
-  },
-};
+  }
+}
 
 /* ------------------------------------------------------------------ helpers */
 

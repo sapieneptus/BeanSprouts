@@ -1,0 +1,36 @@
+---
+import Base from "../layouts/Base.astro";
+import { company } from "../data/company";
+---
+
+<Base title={`Page not found — ${company.name}`} description="That page doesn't exist.">
+  <section class="section notfound">
+    <div class="wrap">
+      <p class="section__label">404</p>
+      <h1>That page doesn't exist.</h1>
+      <p class="notfound__body">
+        The link may be out of date, or it may never have existed. Either way,
+        nothing here is your fault.
+      </p>
+      <a class="btn btn--primary" href="/">Back to the start</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .notfound {
+    padding-block: clamp(5rem, 14vw, 10rem);
+  }
+
+  .notfound h1 {
+    max-width: 16ch;
+    font-size: var(--step-3);
+  }
+
+  .notfound__body {
+    max-width: 46ch;
+    margin: 1.1rem 0 2rem;
+    color: var(--text-muted);
+    font-size: var(--step-1);
+  }
+</style>

@@ -8,8 +8,9 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
-    "check": "astro check"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "check": "astro check && tsc --noEmit -p worker/tsconfig.json"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
@@ -17,6 +18,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "@cloudflare/workers-types": "^5.20260820.1",
+    "wrangler": "^4.0.0"
   }
 }

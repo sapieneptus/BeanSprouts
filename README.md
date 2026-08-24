@@ -5,7 +5,7 @@ skills and project scaffolding that every other BeanSprouts repo copies from.
 
 ```
 site/              Company website — Astro, static output
-workers/contact/   Cloudflare Worker: contact form → GitHub issues
+  worker/          the Worker: serves those files, plus /api/contact
 ```
 
 ## Website
@@ -34,23 +34,30 @@ npm run check    # typecheck
 
 ### Deploying
 
-Full runbook: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — domain, Pages
-project, Worker, token, and a verification checklist, in order.
+Full runbook: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — domain, Worker,
+token, email, and a verification checklist, in order.
 
-The short version: Cloudflare Pages, root directory `site`, build `npm run
-build`, output `dist`, with `PUBLIC_CONTACT_ENDPOINT` set to the Worker URL. If
-that variable is unset the site still builds — the contact section degrades to a
-plain email link rather than rendering a form that can't submit.
+The short version: one Cloudflare Worker serves the whole site. Static files are
+matched first; `/api/contact` has no matching file, so it falls through to
+`site/worker/`. Build settings are root directory `site`, build `npm run build`,
+deploy `npx wrangler deploy`. No build-time environment variables — the endpoint
+is a same-origin path.
 
-Security headers are set in [`site/public/_headers`](site/public/_headers), which
-Cloudflare Pages applies automatically.
+```sh
+cd site
+npm run deploy    # build + deploy by hand
+npm run preview   # build + wrangler dev, the real thing locally
+```
+
+Security headers live in [`site/public/_headers`](site/public/_headers), which
+Workers static assets applies to every response.
 
 ## Contact form
 
 Submissions become issues in a **private** inbox repository, which keeps every
 enquiry in one triageable queue rather than an inbox — and means Claude Code can
 work the queue directly. Setup, threat model, and rate limits are documented in
-[`workers/contact/README.md`](workers/contact/README.md).
+[`site/worker/README.md`](site/worker/README.md).
 
 The GitHub token lives only in the Worker. Sender details never appear in a
 public repo, and message bodies are wrapped so nothing a stranger types can
@@ -64,8 +71,8 @@ render as markdown in an issue.
 - [ ] Rewrite the About section in your own voice
 - [ ] Add a photo at `site/public/portrait.jpg` and set `about.portrait` — a real face does more for trust than anything else on the page
 - [ ] Read the AI section closely; it commits you to a line in public, so it should be exactly your position
-- [ ] Create the private contact-inbox repo and deploy the Worker
-- [ ] Point the domain at Cloudflare Pages and update `site` in `astro.config.mjs`
+- [ ] Create the private contact-inbox repo, then deploy the Worker
+- [ ] Attach the custom domain to the Worker
 
 ## What's next
 

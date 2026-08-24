@@ -1,15 +1,21 @@
-# Contact form Worker
+# The site's Worker
 
-Receives the website's contact form and files each submission as a GitHub issue,
-so messages land somewhere triageable (by you, or by Claude) instead of an inbox.
+Serves the built static site, and handles the contact form at `/api/contact`,
+filing each submission as a GitHub issue so messages land somewhere triageable
+(by you, or by Claude) rather than in an inbox.
 
 ```
-browser ──POST json──▶ Cloudflare Worker ──REST──▶ GitHub issue (private repo)
-                       (holds the token,
-                        validates, throttles)
+request ─▶ static file?  ─yes─▶ served from site/dist
+              │
+              no
+              ▼
+        /api/contact ──REST──▶ GitHub issue (private repo)
+        (holds the token, validates, throttles)
 ```
 
-The GitHub token lives only in the Worker. The browser never sees it.
+Static assets are matched before this script runs, so the only paths that reach
+it are `/api/contact` and genuine 404s. The GitHub token lives only in the
+Worker; the browser never sees it.
 
 ## Before you deploy: use a private inbox repo
 
@@ -36,13 +42,13 @@ it. Nothing else should live there.
 3. **Configure and deploy**
 
    ```sh
-   cd workers/contact
+   cd site
    npm install
    npx wrangler secret put GITHUB_TOKEN   # paste the PAT
-   npx wrangler deploy
+   npm run deploy
    ```
 
-   Edit `wrangler.toml` first so `ALLOWED_ORIGIN`, `GITHUB_OWNER` and
+   Edit `site/wrangler.toml` first so `ALLOWED_ORIGIN`, `GITHUB_OWNER` and
    `GITHUB_REPO` match your setup.
 
 4. **Optional but recommended — rate limiting**
@@ -55,29 +61,16 @@ it. Nothing else should live there.
    `wrangler.toml`, uncomment it, and redeploy. Without it the Worker still
    works; it just won't throttle per IP.
 
-5. **Point the site at the Worker.** In your Cloudflare Pages project settings,
-   add a build-time environment variable:
-
-   ```
-   PUBLIC_CONTACT_ENDPOINT = https://beansprouts-contact.<your-subdomain>.workers.dev
-   ```
-
-   Better: bind the Worker to a route on your own domain (e.g.
-   `https://bean-sprouts.com/api/contact`) so the form is same-origin and the
-   endpoint isn't a third-party URL in the page source.
-
-   If this variable is unset the site still builds — the contact section falls
-   back to a plain email link rather than showing a broken form.
-
 ## Local development
 
 ```sh
-cp .dev.vars.example .dev.vars   # add a real token
-npm run dev
+cd site
+cp worker/.dev.vars.example worker/.dev.vars   # add a real token
+npm run preview                                # build + wrangler dev
 ```
 
-Then run the site with `PUBLIC_CONTACT_ENDPOINT=http://localhost:8787` and add
-`http://localhost:4321` to `ALLOWED_ORIGIN`.
+That serves the site and `/api/contact` on one port, same as production. Add the
+dev origin to `ALLOWED_ORIGIN` while testing.
 
 ## What it rejects
 

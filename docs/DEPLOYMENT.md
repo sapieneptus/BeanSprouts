@@ -6,10 +6,16 @@ waiting on DNS.
 The finished setup:
 
 ```
-bean-sprouts.com            → Cloudflare Pages (static site from site/)
-bean-sprouts.com/api/contact → Cloudflare Worker (contact form)
-                           → GitHub issue in a private inbox repo
+bean-sprouts.com             ┐
+bean-sprouts.com/api/contact ┴→ one Worker ─┬→ static files (site/dist)
+                                            └→ contact endpoint
+                                               → GitHub issue, private repo
 ```
+
+One Cloudflare project serves both. Requests match the static files first;
+anything with no matching file (`/api/contact`) falls through to the script in
+`site/worker/`. The form is therefore same-origin by construction — no second
+Worker, no route binding, no third-party endpoint in the page source.
 
 ## What you need first
 
@@ -69,10 +75,10 @@ Nothing else goes in it.
 
 Copy the token. You'll paste it once in the next step and never see it again.
 
-## 4. Deploy the Worker
+## 4. Configure and deploy
 
 ```sh
-cd workers/contact
+cd site
 npm install
 npx wrangler login
 ```
@@ -82,11 +88,11 @@ npx wrangler login
 > [Doing this from a Codespace](#doing-this-from-a-codespace-or-dev-container)
 > for the API-token route instead.
 
-Edit [`wrangler.toml`](../workers/contact/wrangler.toml):
+Edit [`site/wrangler.toml`](../site/wrangler.toml):
 
-- `ALLOWED_ORIGIN` — your real site origin, no trailing slash
-- `GITHUB_OWNER` — your GitHub username
-- `GITHUB_REPO` — `contact-inbox`
+- `name` — the Worker's name, and its `*.workers.dev` subdomain
+- `ALLOWED_ORIGIN` — your real site origin(s), comma-separated, no trailing slash
+- `GITHUB_OWNER` / `GITHUB_REPO` — your username and the private inbox repo
 
 Add the token as a secret (never a `[vars]` entry — those are committed):
 
@@ -104,73 +110,61 @@ Paste the printed id into the commented `[[kv_namespaces]]` block in
 `wrangler.toml` and uncomment it. Then:
 
 ```sh
-npx wrangler deploy
+npm run deploy      # builds the site, then wrangler deploy
 ```
 
-## 5. Put the Worker on your own domain
+You'll get a `*.workers.dev` URL. Check it before pointing the domain at it.
 
-You can stop at the `*.workers.dev` URL, but binding it to your domain is
-better: the form becomes same-origin, and your page source doesn't advertise a
-third-party endpoint.
+### Running it locally
 
-Uncomment the `[[routes]]` block in `wrangler.toml`, set the pattern to
-`bean-sprouts.com/api/contact` and `zone_name` to your domain, then
-`npx wrangler deploy` again.
+`npm run dev` gives you Astro's dev server — fast for copy and layout, but the
+contact form won't work, because there's no Worker in front of it.
 
-Worker routes take precedence over Pages for matching paths on the same zone,
-so `/api/contact` hits the Worker and everything else hits the site.
+For the real thing, including the endpoint:
 
-> Same-origin `POST` still sends an `Origin` header — browsers include it for
-> any method other than GET and HEAD — so the Worker's origin check keeps
-> working after the move.
+```sh
+cp worker/.dev.vars.example worker/.dev.vars   # add a real token
+npm run preview                                # build + wrangler dev
+```
 
-## 6. Create the Pages project
+That serves the built site and `/api/contact` on one port, exactly as in
+production. Add the dev origin to `ALLOWED_ORIGIN` while testing.
 
-Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**,
-pick this repository, then:
+## 5. Connect it to Git
 
-> **Pick Pages, not Workers.** The same "Create" screen offers a Workers option
-> that also builds from Git, and it's easy to land on by accident. You're in the
-> wrong one if the build settings show a **Deploy command** (`npx wrangler
-> versions upload`) and no **Build output directory**. A Workers project ignores
-> the Pages settings below and runs `npm run build` at the repo root, which fails
-> with `ENOENT ... /opt/buildhome/repo/package.json` because this repo has no
-> root `package.json`. Delete it and create a Pages project instead.
+So that pushing to `main` redeploys without you running anything.
+
+Cloudflare dashboard → **Workers & Pages** → your Worker → **Settings → Build**
+→ connect the repository, then:
 
 | Setting | Value |
 |---|---|
 | Production branch | `main` |
-| Framework preset | Astro |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
 | Root directory | `site` |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
 
-Under **Environment variables (Production)** add:
+**Root directory must be `site`.** Left at `/` the build runs `npm run build` at
+the repo root, where there's no `package.json`, and fails with
+`ENOENT ... /opt/buildhome/repo/package.json`.
 
-```
-PUBLIC_CONTACT_ENDPOINT = https://bean-sprouts.com/api/contact
-```
-
-This is read at **build** time, not run time, so changing it later needs a
-rebuild, not just a redeploy. If it's unset the site still builds — the contact
-section falls back to a plain email link instead of a form that can't submit.
-
-Deploy. You'll get a `*.pages.dev` URL to check before the domain is live.
+No build-time environment variables are needed. The contact endpoint is a
+same-origin path (`/api/contact`) baked into the site, so there's nothing to
+configure per environment.
 
 > The work so far is on the `claude/company-website-repo-qijvdg` branch. Merge
 > it to `main` before the first production build, or set the production branch
 > to match.
 
-## 7. Point the domain at it (DNS)
+## 6. Point the domain at it (DNS)
 
 **Do not create A or AAAA records by hand.** There is no IP address to point at
-— Pages is served from Cloudflare's anycast network and the addresses aren't
+— Workers run on Cloudflare's anycast network and the addresses aren't
 stable. Hardcoding one will break, quietly, later.
 
-Instead, in the Pages project: **Custom domains → Set up a custom domain** →
+Instead, on the Worker: **Settings → Domains & Routes → Add → Custom domain** →
 `bean-sprouts.com`. Then repeat for `www.bean-sprouts.com`. Cloudflare creates
-the DNS records itself — a CNAME to `<project>.pages.dev`, flattened at the
-apex so it's legal at the zone root.
+the DNS records itself and issues the certificate.
 
 Wait for the certificate to be issued, usually a few minutes.
 
@@ -180,12 +174,8 @@ Wait for the certificate to be issued, usually a few minutes.
 > to silence it is the wrong fix. Attaching the custom domains above clears both
 > warnings.
 
-If you ever need the records manually, they're `CNAME` — never `A`/`AAAA`:
-
-| Type | Name | Content | Proxy |
-|---|---|---|---|
-| CNAME | `@` | `<project>.pages.dev` | Proxied |
-| CNAME | `www` | `<project>.pages.dev` | Proxied |
+Attaching a custom domain to a Worker writes the routing itself — there are no
+`A`/`AAAA` records to add, and nothing to copy by hand.
 
 ### Optional: redirect www to the apex
 
@@ -199,7 +189,7 @@ matching hostname `www.bean-sprouts.com`, redirecting to
 to exist and be proxied for the rule to fire, so attach the custom domain first
 either way.
 
-## 7b. Email records: SPF, DKIM, DMARC
+## 6b. Email records: SPF, DKIM, DMARC
 
 Cloudflare will also warn that "email cannot reach @bean-sprouts.com addresses
 and they could be spoofed," and offer a prefilled restrictive record set. Its
@@ -261,7 +251,7 @@ Note the asymmetry: routing only lets you **receive**. If you later want to
 your sending provider, and you'll need real DKIM keys from them. That's a bigger
 change, worth doing properly rather than loosening SPF to `~all` and hoping.
 
-## 8. Verify before you tell anyone
+## 7. Verify before you tell anyone
 
 - [ ] Site loads on the real domain over HTTPS
 - [ ] Dark mode: toggle it, reload, the choice sticks
@@ -276,28 +266,32 @@ change, worth doing properly rather than loosening SPF to `~all` and hoping.
 
 ## Day-to-day
 
-**Changing site copy** — edit `site/src/data/company.ts`, push to `main`.
-Pages rebuilds automatically.
+**Changing site copy** — edit `site/src/data/company.ts`, push to `main`. The
+Worker rebuilds and redeploys automatically.
 
-**Changing the Worker** — `cd workers/contact && npx wrangler deploy`. Not
-automatic; Pages doesn't deploy Workers.
+**Changing the endpoint** — edit `site/worker/index.ts`, push to `main`. Same
+pipeline; the site and the endpoint deploy together, because they're one Worker.
 
-**Rolling back the site** — Pages project → Deployments → find the last good
-one → **Rollback**. Instant, no rebuild.
+**Deploying by hand** — `cd site && npm run deploy`.
+
+**Rolling back** — the Worker's **Deployments** tab → find the last good
+version → roll back to it. No rebuild.
 
 **Rotating the GitHub token** — issue a new one, `npx wrangler secret put
-GITHUB_TOKEN`, redeploy the Worker, then revoke the old token.
+GITHUB_TOKEN`, redeploy, then revoke the old one.
 
 ## When something's wrong
 
 | Symptom | Cause |
 |---|---|
-| Contact section shows an email link, not a form | `PUBLIC_CONTACT_ENDPOINT` unset at build time — set it and **rebuild** |
+| Build fails with `ENOENT ... /opt/buildhome/repo/package.json` | Root directory isn't `site` |
 | Form returns "Origin not allowed" | `ALLOWED_ORIGIN` doesn't exactly match the site origin. No trailing slash; `www.` is a different origin |
 | Form returns 502 | Token expired, lost its Issues permission, or `GITHUB_REPO` is wrong. `npx wrangler tail` shows the GitHub error |
-| Submissions silently succeed but no issue appears | You tripped a bot trap — the Worker fakes success for a filled honeypot or a sub-2.5s submit. Fill the form like a person |
-| Build fails on Cloudflare, works locally | Root directory isn't `site`, or Node version differs. Set `NODE_VERSION=20` in the Pages env vars |
-| Rate limit never triggers | The KV namespace isn't bound. Without it the Worker runs fine but doesn't throttle |
+| Submissions silently succeed but no issue appears | You tripped a bot trap — the endpoint fakes success for a filled honeypot or a sub-2.5s submit. Fill the form like a person |
+| `/api/contact` returns the 404 page | A static file is shadowing the path, or `main` isn't set in `wrangler.toml` |
+| Security headers missing | `site/public/_headers` didn't make it into `dist/`. Check the build output |
+| Rate limit never triggers | The KV namespace isn't bound. Without it the endpoint runs fine but doesn't throttle |
+| Build fails on Cloudflare, works locally | Node version differs. Set `NODE_VERSION=20` in the Worker's build variables |
 
 ---
 
@@ -312,9 +306,8 @@ Almost all of it, yes. The split is clean:
 2. **Cloudflare dashboard** — create an API token so the CLI can authenticate
    without a browser (see below).
 3. **GitHub** — create the fine-grained PAT for the inbox repo (step 3 above).
-4. **Cloudflare dashboard** — connect the Pages project to this Git repo, and
-   add the custom domain. `wrangler pages project create` exists but can't set
-   up the Git connection or attach a domain.
+4. **Cloudflare dashboard** — connect the Worker to this Git repo, and attach
+   the custom domain. Neither is scriptable from wrangler.
 
 **CLI, from inside the container — everything else:**
 
@@ -359,14 +352,13 @@ npm run dev -- --host
 
 Codespaces will offer to forward port 4321.
 
-### Git-connected Pages vs. direct upload
+### Deploying by hand vs. connecting Git
 
-`wrangler pages deploy dist` works entirely from the CLI and skips the
-dashboard. It's tempting if you want zero clicking — but it means either
-deploying by hand every time, or adding a GitHub Actions workflow and storing a
-Cloudflare token in GitHub secrets, which is one more credential to rotate
-forever.
+`npm run deploy` works entirely from the CLI and skips the dashboard. That's
+fine, but it means deploying by hand every time, or adding a GitHub Actions
+workflow with a Cloudflare token in GitHub secrets — one more credential to
+rotate forever.
 
-**Connecting Pages to Git in the dashboard costs about two minutes, once, and
-then it's push-to-deploy with no token to manage.** For lowest total overhead,
-click the two minutes.
+**Connecting the Worker to Git in the dashboard costs about two minutes, once,
+and then it's push-to-deploy with no token to manage.** For lowest total
+overhead, click the two minutes.

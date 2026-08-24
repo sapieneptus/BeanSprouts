@@ -212,12 +212,11 @@ export const contact = {
   heading: "Get in touch",
   lede: "Questions, bug reports, ideas, or just to say hello — this goes straight to me, and I read everything.",
   /**
-   * The Cloudflare Worker that receives the form. Set PUBLIC_CONTACT_ENDPOINT in
-   * your Cloudflare Pages build settings. Empty means the form falls back to a
-   * plain mailto: link, so the page is never broken — just less convenient.
-   * See /workers/contact for deployment.
+   * Same-origin path served by the site's own Worker (see worker/index.ts), so
+   * there is no cross-origin endpoint and nothing to configure at build time.
+   * Override only for local development against a different port.
    */
-  endpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT ?? "",
+  endpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT ?? "/api/contact",
 };
 
 export const nav = [

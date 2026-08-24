@@ -1,0 +1,37 @@
+# One Worker serves the whole site: the built static files, plus the contact
+# endpoint at /api/contact.
+#
+# Requests are matched against the static assets first. Anything with no
+# matching file — /api/contact — falls through to the script in worker/.
+# That means the form is same-origin by construction: no separate Worker, no
+# route binding, no third-party endpoint in the page source.
+
+name = "bean-sprouts"
+main = "worker/index.ts"
+compatibility_date = "2025-09-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+[vars]
+# Exact origin(s) allowed to post to the contact endpoint. Comma-separated, no
+# trailing slash. Same-origin POSTs still send an Origin header, so this check
+# keeps working — it's defence in depth, not the only thing standing between
+# you and the internet.
+ALLOWED_ORIGIN = "https://bean-sprouts.com,https://www.bean-sprouts.com"
+
+# The PRIVATE repository that receives contact submissions as issues.
+# Do not point this at a public repo — issue bodies contain sender names and
+# email addresses.
+GITHUB_OWNER = "sapieneptus"
+GITHUB_REPO = "contact-inbox"
+
+# GITHUB_TOKEN is a secret, never a var:
+#   npx wrangler secret put GITHUB_TOKEN
+
+# Optional per-IP rate limiting. Create the namespace, paste the id, uncomment.
+#   npx wrangler kv namespace create RATE_LIMIT
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "paste-the-id-wrangler-prints"
