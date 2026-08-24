@@ -6,37 +6,10 @@ waiting on DNS.
 The finished setup:
 
 ```
-bean-sprouts.com             ┐
-bean-sprouts.com/api/contact ┴→ one Worker ─┬→ static files (site/dist)
-                                            └→ contact endpoint
-                                               → GitHub issue, private repo
+bean-sprouts.com            → Cloudflare Pages (static site from site/)
+bean-sprouts.com/api/contact → Cloudflare Worker (contact form)
+                           → GitHub issue in a private inbox repo
 ```
-
-One Cloudflare project serves both. Requests match the static files first;
-anything with no matching file (`/api/contact`) falls through to the script in
-`site/worker/`. The form is therefore same-origin by construction — no second
-Worker, no route binding, no third-party endpoint in the page source.
-
-### Why a Worker and not Pages
-
-Cloudflare Pages still exists and would serve this site fine. The create flow is
-reachable, but only via subscript links buried under the Workers wizard — new
-projects are steered to Workers, which says plainly enough where the investment
-is going.
-
-Given that, a Worker with static assets is the better bet, and it happens to be
-less setup rather than more:
-
-| | Pages | This |
-|---|---|---|
-| Cloudflare projects | 2 (site + contact Worker) | 1 |
-| Deploy steps | 2 | 1 |
-| Worker route binding | needed, to make the form same-origin | none |
-| Build-time env vars | `PUBLIC_CONTACT_ENDPOINT` | none |
-
-If you'd rather be on Pages, the site half is portable — `site/dist` is plain
-static output with no Worker dependency. You'd split the contact endpoint back
-out into its own Worker and bind it to a route.
 
 ## What you need first
 
@@ -96,10 +69,10 @@ Nothing else goes in it.
 
 Copy the token. You'll paste it once in the next step and never see it again.
 
-## 4. Configure and deploy
+## 4. Deploy the Worker
 
 ```sh
-cd site
+cd workers/contact
 npm install
 npx wrangler login
 ```
@@ -109,11 +82,11 @@ npx wrangler login
 > [Doing this from a Codespace](#doing-this-from-a-codespace-or-dev-container)
 > for the API-token route instead.
 
-Edit [`site/wrangler.toml`](../site/wrangler.toml):
+Edit [`wrangler.toml`](../workers/contact/wrangler.toml):
 
-- `name` — the Worker's name, and its `*.workers.dev` subdomain
-- `ALLOWED_ORIGIN` — your real site origin(s), comma-separated, no trailing slash
-- `GITHUB_OWNER` / `GITHUB_REPO` — your username and the private inbox repo
+- `ALLOWED_ORIGIN` — your real site origin, no trailing slash
+- `GITHUB_OWNER` — your GitHub username
+- `GITHUB_REPO` — `contact-inbox`
 
 Add the token as a secret (never a `[vars]` entry — those are committed):
 
@@ -131,153 +104,156 @@ Paste the printed id into the commented `[[kv_namespaces]]` block in
 `wrangler.toml` and uncomment it. Then:
 
 ```sh
-npm run deploy      # builds the site, then wrangler deploy
+npx wrangler deploy
 ```
 
-You'll get a `*.workers.dev` URL. Check it before pointing the domain at it.
+## 5. Put the Worker on your own domain
 
-### Running it locally
+You can stop at the `*.workers.dev` URL, but binding it to your domain is
+better: the form becomes same-origin, and your page source doesn't advertise a
+third-party endpoint.
 
-`npm run dev` gives you Astro's dev server — fast for copy and layout, but the
-contact form won't work, because there's no Worker in front of it.
+Uncomment the `[[routes]]` block in `wrangler.toml`, set the pattern to
+`bean-sprouts.com/api/contact` and `zone_name` to your domain, then
+`npx wrangler deploy` again.
 
-For the real thing, including the endpoint:
+Worker routes take precedence over Pages for matching paths on the same zone,
+so `/api/contact` hits the Worker and everything else hits the site.
 
-```sh
-cp worker/.dev.vars.example worker/.dev.vars   # add a real token
-npm run preview                                # build + wrangler dev
-```
+> Same-origin `POST` still sends an `Origin` header — browsers include it for
+> any method other than GET and HEAD — so the Worker's origin check keeps
+> working after the move.
 
-That serves the built site and `/api/contact` on one port, exactly as in
-production. Add the dev origin to `ALLOWED_ORIGIN` while testing.
+## 6. Create the Pages project
 
-## 5. Connect it to Git
+Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**,
+pick this repository, then:
 
-So that pushing to `main` redeploys without you running anything.
-
-Cloudflare dashboard → **Workers & Pages** → your Worker → **Settings → Build**
-→ connect the repository, then:
+> **Make sure you're in the Pages flow, not Workers.** The Create screen defaults
+> to Workers and the Pages entry is behind small secondary links. You're in the
+> wrong one if the build settings show a **Deploy command** (`npx wrangler
+> versions upload`) and no **Build output directory** — a Workers project ignores
+> the settings below, runs the build at the repo root, and fails with
+> `ENOENT ... /opt/buildhome/repo/package.json`.
 
 | Setting | Value |
 |---|---|
 | Production branch | `main` |
-| Root directory | `site` |
+| Framework preset | Astro |
 | Build command | `npm run build` |
-| Deploy command | `npx wrangler deploy` |
+| Build output directory | `dist` |
+| Root directory | `site` |
 
-**Root directory must be `site`.** Left at `/` the build runs `npm run build` at
-the repo root, where there's no `package.json`, and fails with
-`ENOENT ... /opt/buildhome/repo/package.json`.
+Under **Environment variables (Production)** add:
 
-No build-time environment variables are needed. The contact endpoint is a
-same-origin path (`/api/contact`) baked into the site, so there's nothing to
-configure per environment.
+```
+PUBLIC_CONTACT_ENDPOINT = https://bean-sprouts.com/api/contact
+```
+
+This is read at **build** time, not run time, so changing it later needs a
+rebuild, not just a redeploy. If it's unset the site still builds — the contact
+section falls back to a plain email link instead of a form that can't submit.
+
+Deploy. You'll get a `*.pages.dev` URL to check before the domain is live.
 
 > The work so far is on the `claude/company-website-repo-qijvdg` branch. Merge
 > it to `main` before the first production build, or set the production branch
 > to match.
 
-## 6. Point the domain at it (DNS)
+## 7. Point the domain at it (DNS)
 
-**Do not create A or AAAA records by hand.** There is no IP address to point at
-— Workers run on Cloudflare's anycast network and the addresses aren't
-stable. Hardcoding one will break, quietly, later.
+**The nameservers must be on Cloudflare before this works.** If your domain's
+DNS is still served elsewhere — Route 53, your registrar's default, anywhere —
+stop and move it first. This isn't a preference; see the apex note below.
 
-Instead, on the Worker: **Settings → Domains & Routes → Add → Custom domain** →
-`bean-sprouts.com`. Then repeat for `www.bean-sprouts.com`. Cloudflare creates
-the DNS records itself and issues the certificate.
+In the Pages project: **Custom domains → Set up a custom domain** →
+`bean-sprouts.com`. Repeat for `www.bean-sprouts.com`. Cloudflare writes the DNS
+records itself when the zone is on your account. Wait for the certificate,
+usually a few minutes.
 
-Wait for the certificate to be issued, usually a few minutes.
+> **Cloudflare warns you about missing records before you get here.** "Visitors
+> cannot reach bean-sprouts.com" appears the moment the zone exists and is
+> empty. Expected. Attaching the custom domains clears it — adding records by
+> hand to silence it is the wrong fix.
 
-> **Cloudflare will warn you about missing records before you get here.**
-> "Visitors cannot reach bean-sprouts.com / www.bean-sprouts.com" appears the
-> moment the zone exists and is empty. It's expected, and adding records by hand
-> to silence it is the wrong fix. Attaching the custom domains above clears both
-> warnings.
+### Why the apex needs Cloudflare's DNS
 
-Attaching a custom domain to a Worker writes the routing itself — there are no
-`A`/`AAAA` records to add, and nothing to copy by hand.
+Pages has no fixed IP, so there's nothing to put in an `A` record. The target is
+a hostname (`<project>.pages.dev`), which means a `CNAME` — and **a CNAME is
+illegal at a zone apex**. The apex must carry `SOA` and `NS` records, and a
+CNAME cannot coexist with any other record on the same name. Every compliant DNS
+server refuses it.
 
-### Optional: redirect www to the apex
+Route 53 will reject it explicitly:
 
-Attaching both domains serves the site at both, which is fine — the pages emit
-canonical tags pointing at the apex, so search engines won't treat it as
-duplicate content.
+```
+RRSet of type CNAME with DNS name bean-sprouts.com. is not permitted at apex
+```
 
-If you'd rather have a real 301: **Rules → Redirect Rules → Create rule**,
-matching hostname `www.bean-sprouts.com`, redirecting to
-`https://bean-sprouts.com` with the path preserved. The www DNS record still has
-to exist and be proxied for the rule to fire, so attach the custom domain first
-either way.
+Cloudflare gets around this with **CNAME flattening**: it resolves the target
+and answers with `A`/`AAAA` records at the apex, so nothing illegal is ever
+published. Route 53's nearest equivalent, an **Alias** record, only targets AWS
+resources — CloudFront, ELB, S3 website endpoints, API Gateway — and cannot
+point at `pages.dev`. So there is no way to serve the apex from Route 53.
 
-## 6b. Email records: SPF, DKIM, DMARC
+Moving nameservers: Route 53 → **Registered domains** → your domain → edit
+nameservers, replace the four AWS ones with the two Cloudflare gave you.
+Cloudflare's zone-add scans and imports existing records, but check they all
+came across before cutting over. Afterwards, delete the unused Route 53 hosted
+zone — it bills $0.50/month regardless of traffic.
 
-Cloudflare will also warn that "email cannot reach @bean-sprouts.com addresses
-and they could be spoofed," and offer a prefilled restrictive record set. Its
-description — "advise receiving mail servers to drop all incoming email sent
-from your domain" — is badly worded and reads far more alarming than it is.
+`www` is not the apex, so a CNAME there is legal anywhere. That's a usable
+stopgap while nameservers propagate.
 
-**These are two independent things:**
+## 7b. Email records: SPF, DKIM, DMARC
+
+Cloudflare warns that "email cannot reach @bean-sprouts.com addresses and they
+could be spoofed," and offers a prefilled restrictive set. Its description —
+"advise receiving mail servers to drop all incoming email sent from your
+domain" — is badly worded and reads far more alarming than it is.
+
+**Two independent things:**
 
 | Concern | Governed by | Direction |
 |---|---|---|
-| Can people send mail **to** you at `@bean-sprouts.com`? | `MX` records | Inbound |
-| Can someone send mail **claiming to be** `@bean-sprouts.com`? | SPF, DKIM, DMARC | Outbound |
+| Can people send mail **to** you at the domain? | `MX` records | Inbound |
+| Can someone send mail **claiming to be** the domain? | SPF, DKIM, DMARC | Outbound |
 
-The restrictive preset only touches the second. It says "no server anywhere is
-authorised to send mail as this domain, and receivers should reject anything
-that claims to be." It cannot stop anyone from emailing you — that's MX, which
-the preset doesn't set.
-
-**Since `bean-sprouts.com` sends no mail today, this preset is exactly right.**
-The site's contact address is on a different domain, and the contact form posts
-to a Worker and files a GitHub issue — no mail is sent from this domain at any
-point. Publishing "nobody may send as us" costs nothing and stops your domain
-being used to spoof people, which is worth having on a domain whose whole job is
-to look trustworthy.
-
-What each record does:
+The preset only touches the second. It says "no server is authorised to send as
+this domain, reject anything claiming to be." It cannot stop anyone emailing
+you — that's MX, which the preset doesn't set.
 
 | Record | Meaning |
 |---|---|
-| `TXT @` → `v=spf1 -all` | No server is authorised to send as this domain |
-| `TXT *._domainkey` → `v=DKIM1; p=` | Empty public key = revoked. The wildcard covers every selector |
-| `TXT _dmarc` → `v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;` | Receivers should reject failures outright, strictly, subdomains included |
+| `TXT @` → `v=spf1 -all` | No server may send as this domain |
+| `TXT *._domainkey` → `v=DKIM1; p=` | Empty key = revoked. The wildcard covers every selector |
+| `TXT _dmarc` → `v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;` | Reject failures outright, strictly, subdomains included |
 
-Submit it. Leave **Reporting email addresses** blank unless you want XML
-aggregate reports — for a domain that sends nothing they're mostly noise, and
-you can add `rua=` later if you get curious about who's trying to spoof you.
+While the site publishes an address on another domain and sends no mail from
+this one, the preset is exactly right. Leave the reporting address blank unless
+you want the XML aggregate reports; you can add `rua=` later.
 
-**MX:** required, because the site now publishes `hello@bean-sprouts.com`.
-Set up **Email Routing** (below) before launch. Do *not* add a "null MX"
-(RFC 7505) — that declares the domain accepts no mail, which would be true of a
-domain that publishes no address, but is now wrong.
+**MX:** not needed while no address at this domain is published. To be explicit
+rather than merely silent, add a "null MX" (RFC 7505) — priority `0`, content
+`.` — which formally declares the domain accepts no mail.
 
-### Set up hello@bean-sprouts.com
+### If you want hello@bean-sprouts.com
 
-The site publishes this address, so it has to work before you tell anyone about
-the site. A published address that bounces is worse than no address.
+**Email → Email Routing** forwards it to your real inbox, free, and adds the MX
+records for you. Don't add the null MX if you go this way, and expect Cloudflare
+to prompt you about the SPF record it conflicts with.
 
-**Cloudflare dashboard → Email → Email Routing → Get started.** Create a rule
-forwarding `hello@bean-sprouts.com` to your real inbox, and verify the
-destination address (Cloudflare emails you a confirmation link). Enabling it adds
-the MX records for you.
+Routing only lets you **receive**. Sending as that address means replacing
+`-all` with an include list naming your provider, plus real DKIM keys from them.
 
-Cloudflare will also prompt you about the SPF record, because the restrictive
-`v=spf1 -all` above conflicts with what it wants to add. Follow its guidance —
-it knows what it needs.
+**Publish the address on the site only once routing is verified** — a published
+address that bounces is worse than no address.
 
-Note the asymmetry: routing only lets you **receive**. If you later want to
-*send* as `hello@bean-sprouts.com`, `-all` has to become an include list naming
-your sending provider, and you'll need real DKIM keys from them. That's a bigger
-change, worth doing properly rather than loosening SPF to `~all` and hoping.
-
-## 7. Verify before you tell anyone
+## 8. Verify before you tell anyone
 
 - [ ] Site loads on the real domain over HTTPS
 - [ ] Dark mode: toggle it, reload, the choice sticks
 - [ ] Every nav link scrolls to the right section, nothing hidden behind the header
-- [ ] Email `hello@bean-sprouts.com` from an outside account and confirm it lands in your inbox
 - [ ] Send yourself a real message through the contact form
 - [ ] An issue appears in `contact-inbox` with the right name, email and body
 - [ ] Submit again 6 times — the 6th should be refused (rate limit is 5/hour/IP)
@@ -287,32 +263,30 @@ change, worth doing properly rather than loosening SPF to `~all` and hoping.
 
 ## Day-to-day
 
-**Changing site copy** — edit `site/src/data/company.ts`, push to `main`. The
-Worker rebuilds and redeploys automatically.
+**Changing site copy** — edit `site/src/data/company.ts`, push to `main`.
+Pages rebuilds automatically.
 
-**Changing the endpoint** — edit `site/worker/index.ts`, push to `main`. Same
-pipeline; the site and the endpoint deploy together, because they're one Worker.
+**Changing the Worker** — `cd workers/contact && npx wrangler deploy`. Not
+automatic; Pages doesn't deploy Workers.
 
-**Deploying by hand** — `cd site && npm run deploy`.
-
-**Rolling back** — the Worker's **Deployments** tab → find the last good
-version → roll back to it. No rebuild.
+**Rolling back the site** — Pages project → Deployments → find the last good
+one → **Rollback**. Instant, no rebuild.
 
 **Rotating the GitHub token** — issue a new one, `npx wrangler secret put
-GITHUB_TOKEN`, redeploy, then revoke the old one.
+GITHUB_TOKEN`, redeploy the Worker, then revoke the old token.
 
 ## When something's wrong
 
 | Symptom | Cause |
 |---|---|
-| Build fails with `ENOENT ... /opt/buildhome/repo/package.json` | Root directory isn't `site` |
-| Form returns "Origin not allowed" | `ALLOWED_ORIGIN` doesn't match the site origin. **`[vars]` are baked in at deploy time — editing `wrangler.toml` does nothing until you deploy again.** Also check: no trailing slash, and `www.` is a separate origin. `npx wrangler tail` logs both sides of the mismatch |
+| Contact section shows an email link, not a form | `PUBLIC_CONTACT_ENDPOINT` unset at build time — set it and **rebuild** |
+| Form returns "Origin not allowed" | `ALLOWED_ORIGIN` doesn't match. **`[vars]` are baked in at deploy time — editing `wrangler.toml` does nothing until you `wrangler deploy` again.** Also: no trailing slash, and `www.` is a separate origin. `npx wrangler tail` logs both sides |
+| Build fails with `ENOENT ... /opt/buildhome/repo/package.json` | Root directory isn't `site`, or you created a Workers project instead of a Pages one |
+| Route 53 refuses a CNAME at the apex | Expected — see step 7. The nameservers have to move to Cloudflare |
 | Form returns 502 | Token expired, lost its Issues permission, or `GITHUB_REPO` is wrong. `npx wrangler tail` shows the GitHub error |
-| Submissions silently succeed but no issue appears | You tripped a bot trap — the endpoint fakes success for a filled honeypot or a sub-2.5s submit. Fill the form like a person |
-| `/api/contact` returns the 404 page | A static file is shadowing the path, or `main` isn't set in `wrangler.toml` |
-| Security headers missing | `site/public/_headers` didn't make it into `dist/`. Check the build output |
-| Rate limit never triggers | The KV namespace isn't bound. Without it the endpoint runs fine but doesn't throttle |
-| Build fails on Cloudflare, works locally | Node version differs. Set `NODE_VERSION=20` in the Worker's build variables |
+| Submissions silently succeed but no issue appears | You tripped a bot trap — the Worker fakes success for a filled honeypot or a sub-2.5s submit. Fill the form like a person |
+| Build fails on Cloudflare, works locally | Root directory isn't `site`, or Node version differs. Set `NODE_VERSION=20` in the Pages env vars |
+| Rate limit never triggers | The KV namespace isn't bound. Without it the Worker runs fine but doesn't throttle |
 
 ---
 
@@ -327,8 +301,9 @@ Almost all of it, yes. The split is clean:
 2. **Cloudflare dashboard** — create an API token so the CLI can authenticate
    without a browser (see below).
 3. **GitHub** — create the fine-grained PAT for the inbox repo (step 3 above).
-4. **Cloudflare dashboard** — connect the Worker to this Git repo, and attach
-   the custom domain. Neither is scriptable from wrangler.
+4. **Cloudflare dashboard** — connect the Pages project to this Git repo, and
+   add the custom domain. `wrangler pages project create` exists but can't set
+   up the Git connection or attach a domain.
 
 **CLI, from inside the container — everything else:**
 
@@ -373,13 +348,14 @@ npm run dev -- --host
 
 Codespaces will offer to forward port 4321.
 
-### Deploying by hand vs. connecting Git
+### Git-connected Pages vs. direct upload
 
-`npm run deploy` works entirely from the CLI and skips the dashboard. That's
-fine, but it means deploying by hand every time, or adding a GitHub Actions
-workflow with a Cloudflare token in GitHub secrets — one more credential to
-rotate forever.
+`wrangler pages deploy dist` works entirely from the CLI and skips the
+dashboard. It's tempting if you want zero clicking — but it means either
+deploying by hand every time, or adding a GitHub Actions workflow and storing a
+Cloudflare token in GitHub secrets, which is one more credential to rotate
+forever.
 
-**Connecting the Worker to Git in the dashboard costs about two minutes, once,
-and then it's push-to-deploy with no token to manage.** For lowest total
-overhead, click the two minutes.
+**Connecting Pages to Git in the dashboard costs about two minutes, once, and
+then it's push-to-deploy with no token to manage.** For lowest total overhead,
+click the two minutes.
