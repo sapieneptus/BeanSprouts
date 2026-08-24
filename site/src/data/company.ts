@@ -41,8 +41,11 @@ export const company = {
   /** Used for page metadata and social previews. */
   metaDescription:
     "BeanSprouts is a small independent software studio in Denmark, building simple, focused software from real problems — with no ads, no dark patterns, and no data selling.",
-  /** TODO: confirm this is the address you want published. */
-  email: "chris@chrisf.io",
+  /**
+   * Requires Cloudflare Email Routing (or another inbox) to be live before
+   * launch — otherwise every message to this address bounces.
+   */
+  email: "hello@bean-sprouts.com",
   founder: {
     /** TODO: full name as you'd like it to appear. */
     name: "Chris",

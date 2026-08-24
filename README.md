@@ -59,6 +59,7 @@ render as markdown in an issue.
 ## Before this goes live
 
 - [ ] Fill in the real CVR number and legal entity name in `site/src/data/company.ts`
+- [ ] Set up Cloudflare Email Routing for `hello@bean-sprouts.com` — the site publishes it, so it must receive before launch
 - [ ] Write real copy for Sparr, Little Beans and BeanTray (they're `TODO` placeholders — deliberately not invented)
 - [ ] Rewrite the About section in your own voice
 - [ ] Add a photo at `site/public/portrait.jpg` and set `about.portrait` — a real face does more for trust than anything else on the page

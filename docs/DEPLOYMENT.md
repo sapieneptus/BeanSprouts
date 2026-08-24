@@ -129,6 +129,14 @@ so `/api/contact` hits the Worker and everything else hits the site.
 Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**,
 pick this repository, then:
 
+> **Pick Pages, not Workers.** The same "Create" screen offers a Workers option
+> that also builds from Git, and it's easy to land on by accident. You're in the
+> wrong one if the build settings show a **Deploy command** (`npx wrangler
+> versions upload`) and no **Build output directory**. A Workers project ignores
+> the Pages settings below and runs `npm run build` at the repo root, which fails
+> with `ENOENT ... /opt/buildhome/repo/package.json` because this repo has no
+> root `package.json`. Delete it and create a Pages project instead.
+
 | Setting | Value |
 |---|---|
 | Production branch | `main` |
@@ -229,28 +237,36 @@ Submit it. Leave **Reporting email addresses** blank unless you want XML
 aggregate reports — for a domain that sends nothing they're mostly noise, and
 you can add `rua=` later if you get curious about who's trying to spoof you.
 
-**MX:** you don't need one if you don't want mail at this domain. If you want to
-be explicit rather than merely silent, add a "null MX" (RFC 7505) — an `MX`
-record with priority `0` and content `.` — which formally declares the domain
-accepts no mail. Skip it if you're doing the next bit.
+**MX:** required, because the site now publishes `hello@bean-sprouts.com`.
+Set up **Email Routing** (below) before launch. Do *not* add a "null MX"
+(RFC 7505) — that declares the domain accepts no mail, which would be true of a
+domain that publishes no address, but is now wrong.
 
-### If you later want hello@bean-sprouts.com
+### Set up hello@bean-sprouts.com
 
-**Cloudflare Email Routing** (free) forwards `hello@bean-sprouts.com` to your
-real inbox. Enabling it adds MX records, and Cloudflare will prompt you about
-the SPF record it conflicts with — follow its guidance then rather than
-pre-empting it now. Don't add the null MX above if you're going this way.
+The site publishes this address, so it has to work before you tell anyone about
+the site. A published address that bounces is worse than no address.
 
-Note the asymmetry: forwarding only lets you *receive*. If you want to *send* as
-`hello@bean-sprouts.com`, `-all` has to become an include list naming your
-sending provider, and you'll need real DKIM keys from them. That's a bigger
-change, and worth doing properly rather than loosening SPF to `~all` and hoping.
+**Cloudflare dashboard → Email → Email Routing → Get started.** Create a rule
+forwarding `hello@bean-sprouts.com` to your real inbox, and verify the
+destination address (Cloudflare emails you a confirmation link). Enabling it adds
+the MX records for you.
+
+Cloudflare will also prompt you about the SPF record, because the restrictive
+`v=spf1 -all` above conflicts with what it wants to add. Follow its guidance —
+it knows what it needs.
+
+Note the asymmetry: routing only lets you **receive**. If you later want to
+*send* as `hello@bean-sprouts.com`, `-all` has to become an include list naming
+your sending provider, and you'll need real DKIM keys from them. That's a bigger
+change, worth doing properly rather than loosening SPF to `~all` and hoping.
 
 ## 8. Verify before you tell anyone
 
 - [ ] Site loads on the real domain over HTTPS
 - [ ] Dark mode: toggle it, reload, the choice sticks
 - [ ] Every nav link scrolls to the right section, nothing hidden behind the header
+- [ ] Email `hello@bean-sprouts.com` from an outside account and confirm it lands in your inbox
 - [ ] Send yourself a real message through the contact form
 - [ ] An issue appears in `contact-inbox` with the right name, email and body
 - [ ] Submit again 6 times — the 6th should be refused (rate limit is 5/hour/IP)
