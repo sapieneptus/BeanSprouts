@@ -9,7 +9,7 @@
  */
 
 export interface Env {
-  /** Exact origin allowed to post, e.g. "https://beansprouts.dk". */
+  /** Exact origin allowed to post, e.g. "https://bean-sprouts.com". */
   ALLOWED_ORIGIN: string;
   /** Owner of the private inbox repo. */
   GITHUB_OWNER: string;

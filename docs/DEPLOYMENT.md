@@ -6,8 +6,8 @@ waiting on DNS.
 The finished setup:
 
 ```
-beansprouts.dk            → Cloudflare Pages (static site from site/)
-beansprouts.dk/api/contact → Cloudflare Worker (contact form)
+bean-sprouts.com            → Cloudflare Pages (static site from site/)
+bean-sprouts.com/api/contact → Cloudflare Worker (contact form)
                            → GitHub issue in a private inbox repo
 ```
 
@@ -114,7 +114,7 @@ better: the form becomes same-origin, and your page source doesn't advertise a
 third-party endpoint.
 
 Uncomment the `[[routes]]` block in `wrangler.toml`, set the pattern to
-`beansprouts.dk/api/contact` and `zone_name` to your domain, then
+`bean-sprouts.com/api/contact` and `zone_name` to your domain, then
 `npx wrangler deploy` again.
 
 Worker routes take precedence over Pages for matching paths on the same zone,
@@ -140,7 +140,7 @@ pick this repository, then:
 Under **Environment variables (Production)** add:
 
 ```
-PUBLIC_CONTACT_ENDPOINT = https://beansprouts.dk/api/contact
+PUBLIC_CONTACT_ENDPOINT = https://bean-sprouts.com/api/contact
 ```
 
 This is read at **build** time, not run time, so changing it later needs a
@@ -156,7 +156,7 @@ Deploy. You'll get a `*.pages.dev` URL to check before the domain is live.
 ## 7. Point the domain at it
 
 In the Pages project: **Custom domains → Set up a custom domain** →
-`beansprouts.dk`. Repeat for `www.beansprouts.dk` if you want it. Cloudflare
+`bean-sprouts.com`. Repeat for `www.bean-sprouts.com` if you want it. Cloudflare
 adds the DNS records itself when the zone is already on your account.
 
 Wait for the certificate to be issued — usually a few minutes.
@@ -169,7 +169,7 @@ Wait for the certificate to be issued — usually a few minutes.
 - [ ] Send yourself a real message through the contact form
 - [ ] An issue appears in `contact-inbox` with the right name, email and body
 - [ ] Submit again 6 times — the 6th should be refused (rate limit is 5/hour/IP)
-- [ ] `curl -sI https://beansprouts.dk | grep -i strict-transport` returns the header
+- [ ] `curl -sI https://bean-sprouts.com | grep -i strict-transport` returns the header
 - [ ] View source: no GitHub token anywhere (it's in the Worker, but check)
 - [ ] Phone check — the layout is single-column and nothing scrolls sideways
 
