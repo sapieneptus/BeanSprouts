@@ -3,6 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2025-09-01"
 workers_dev = false
 
+# Workers Logs. Off by default, which means the origin-mismatch warning the
+# script emits would be discarded. Keeps ~7 days of logs, viewable under
+# Observability in the dashboard; `wrangler tail` works either way.
+[observability]
+enabled = true
+
 [vars]
 # Exact origin(s) allowed to post to this Worker. Comma-separated, no trailing
 # slash. Add your Pages preview domain here too if you want the form to work

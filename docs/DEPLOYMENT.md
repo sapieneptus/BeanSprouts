@@ -266,8 +266,27 @@ address that bounces is worse than no address.
 **Changing site copy** — edit `site/src/data/company.ts`, push to `main`.
 Pages rebuilds automatically.
 
-**Changing the Worker** — `cd workers/contact && npx wrangler deploy`. Not
-automatic; Pages doesn't deploy Workers.
+**Changing the Worker** — `cd workers/contact && npx wrangler deploy`.
+
+> **There is no deploy button in the dashboard for this Worker, and that's
+> expected.** The Pages project is Git-connected, so it redeploys on push. The
+> Worker isn't: it's deployed from the CLI, which is why its Versions list reads
+> "Manually deployed · Wrangler". Pushing to `main` rebuilds the site and leaves
+> the Worker untouched. Editing `wrangler.toml` changes nothing until you run
+> `wrangler deploy`, because `[vars]` are baked in at deploy time.
+>
+> The dashboard's **Edit code** does deploy, but it edits the live script
+> directly — that silently diverges from this repo. Don't use it for anything
+> you want to keep.
+>
+> To make the Worker deploy on push too, connect it under **Settings → Build**
+> with root directory `workers/contact` and deploy command `npx wrangler
+> deploy`.
+
+**Reading the Worker's logs** — `npx wrangler tail` streams them live. The
+config sets `[observability] enabled = true`, so they're also retained for about
+a week under the Worker's **Observability** tab. Without that flag the tab stays
+empty and the origin-mismatch warning is discarded.
 
 **Rolling back the site** — Pages project → Deployments → find the last good
 one → **Rollback**. Instant, no rebuild.
