@@ -6,8 +6,8 @@ waiting on DNS.
 The finished setup:
 
 ```
-beansprouts.dk            → Cloudflare Pages (static site from site/)
-beansprouts.dk/api/contact → Cloudflare Worker (contact form)
+bean-sprouts.com            → Cloudflare Pages (static site from site/)
+bean-sprouts.com/api/contact → Cloudflare Worker (contact form)
                            → GitHub issue in a private inbox repo
 ```
 
@@ -114,7 +114,7 @@ better: the form becomes same-origin, and your page source doesn't advertise a
 third-party endpoint.
 
 Uncomment the `[[routes]]` block in `wrangler.toml`, set the pattern to
-`beansprouts.dk/api/contact` and `zone_name` to your domain, then
+`bean-sprouts.com/api/contact` and `zone_name` to your domain, then
 `npx wrangler deploy` again.
 
 Worker routes take precedence over Pages for matching paths on the same zone,
@@ -140,7 +140,7 @@ pick this repository, then:
 Under **Environment variables (Production)** add:
 
 ```
-PUBLIC_CONTACT_ENDPOINT = https://beansprouts.dk/api/contact
+PUBLIC_CONTACT_ENDPOINT = https://bean-sprouts.com/api/contact
 ```
 
 This is read at **build** time, not run time, so changing it later needs a
@@ -153,13 +153,98 @@ Deploy. You'll get a `*.pages.dev` URL to check before the domain is live.
 > it to `main` before the first production build, or set the production branch
 > to match.
 
-## 7. Point the domain at it
+## 7. Point the domain at it (DNS)
 
-In the Pages project: **Custom domains → Set up a custom domain** →
-`beansprouts.dk`. Repeat for `www.beansprouts.dk` if you want it. Cloudflare
-adds the DNS records itself when the zone is already on your account.
+**Do not create A or AAAA records by hand.** There is no IP address to point at
+— Pages is served from Cloudflare's anycast network and the addresses aren't
+stable. Hardcoding one will break, quietly, later.
 
-Wait for the certificate to be issued — usually a few minutes.
+Instead, in the Pages project: **Custom domains → Set up a custom domain** →
+`bean-sprouts.com`. Then repeat for `www.bean-sprouts.com`. Cloudflare creates
+the DNS records itself — a CNAME to `<project>.pages.dev`, flattened at the
+apex so it's legal at the zone root.
+
+Wait for the certificate to be issued, usually a few minutes.
+
+> **Cloudflare will warn you about missing records before you get here.**
+> "Visitors cannot reach bean-sprouts.com / www.bean-sprouts.com" appears the
+> moment the zone exists and is empty. It's expected, and adding records by hand
+> to silence it is the wrong fix. Attaching the custom domains above clears both
+> warnings.
+
+If you ever need the records manually, they're `CNAME` — never `A`/`AAAA`:
+
+| Type | Name | Content | Proxy |
+|---|---|---|---|
+| CNAME | `@` | `<project>.pages.dev` | Proxied |
+| CNAME | `www` | `<project>.pages.dev` | Proxied |
+
+### Optional: redirect www to the apex
+
+Attaching both domains serves the site at both, which is fine — the pages emit
+canonical tags pointing at the apex, so search engines won't treat it as
+duplicate content.
+
+If you'd rather have a real 301: **Rules → Redirect Rules → Create rule**,
+matching hostname `www.bean-sprouts.com`, redirecting to
+`https://bean-sprouts.com` with the path preserved. The www DNS record still has
+to exist and be proxied for the rule to fire, so attach the custom domain first
+either way.
+
+## 7b. Email records: SPF, DKIM, DMARC
+
+Cloudflare will also warn that "email cannot reach @bean-sprouts.com addresses
+and they could be spoofed," and offer a prefilled restrictive record set. Its
+description — "advise receiving mail servers to drop all incoming email sent
+from your domain" — is badly worded and reads far more alarming than it is.
+
+**These are two independent things:**
+
+| Concern | Governed by | Direction |
+|---|---|---|
+| Can people send mail **to** you at `@bean-sprouts.com`? | `MX` records | Inbound |
+| Can someone send mail **claiming to be** `@bean-sprouts.com`? | SPF, DKIM, DMARC | Outbound |
+
+The restrictive preset only touches the second. It says "no server anywhere is
+authorised to send mail as this domain, and receivers should reject anything
+that claims to be." It cannot stop anyone from emailing you — that's MX, which
+the preset doesn't set.
+
+**Since `bean-sprouts.com` sends no mail today, this preset is exactly right.**
+The site's contact address is on a different domain, and the contact form posts
+to a Worker and files a GitHub issue — no mail is sent from this domain at any
+point. Publishing "nobody may send as us" costs nothing and stops your domain
+being used to spoof people, which is worth having on a domain whose whole job is
+to look trustworthy.
+
+What each record does:
+
+| Record | Meaning |
+|---|---|
+| `TXT @` → `v=spf1 -all` | No server is authorised to send as this domain |
+| `TXT *._domainkey` → `v=DKIM1; p=` | Empty public key = revoked. The wildcard covers every selector |
+| `TXT _dmarc` → `v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;` | Receivers should reject failures outright, strictly, subdomains included |
+
+Submit it. Leave **Reporting email addresses** blank unless you want XML
+aggregate reports — for a domain that sends nothing they're mostly noise, and
+you can add `rua=` later if you get curious about who's trying to spoof you.
+
+**MX:** you don't need one if you don't want mail at this domain. If you want to
+be explicit rather than merely silent, add a "null MX" (RFC 7505) — an `MX`
+record with priority `0` and content `.` — which formally declares the domain
+accepts no mail. Skip it if you're doing the next bit.
+
+### If you later want hello@bean-sprouts.com
+
+**Cloudflare Email Routing** (free) forwards `hello@bean-sprouts.com` to your
+real inbox. Enabling it adds MX records, and Cloudflare will prompt you about
+the SPF record it conflicts with — follow its guidance then rather than
+pre-empting it now. Don't add the null MX above if you're going this way.
+
+Note the asymmetry: forwarding only lets you *receive*. If you want to *send* as
+`hello@bean-sprouts.com`, `-all` has to become an include list naming your
+sending provider, and you'll need real DKIM keys from them. That's a bigger
+change, and worth doing properly rather than loosening SPF to `~all` and hoping.
 
 ## 8. Verify before you tell anyone
 
@@ -169,7 +254,7 @@ Wait for the certificate to be issued — usually a few minutes.
 - [ ] Send yourself a real message through the contact form
 - [ ] An issue appears in `contact-inbox` with the right name, email and body
 - [ ] Submit again 6 times — the 6th should be refused (rate limit is 5/hour/IP)
-- [ ] `curl -sI https://beansprouts.dk | grep -i strict-transport` returns the header
+- [ ] `curl -sI https://bean-sprouts.com | grep -i strict-transport` returns the header
 - [ ] View source: no GitHub token anywhere (it's in the Worker, but check)
 - [ ] Phone check — the layout is single-column and nothing scrolls sideways
 

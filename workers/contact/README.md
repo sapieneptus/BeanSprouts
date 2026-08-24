@@ -63,7 +63,7 @@ it. Nothing else should live there.
    ```
 
    Better: bind the Worker to a route on your own domain (e.g.
-   `https://beansprouts.dk/api/contact`) so the form is same-origin and the
+   `https://bean-sprouts.com/api/contact`) so the form is same-origin and the
    endpoint isn't a third-party URL in the page source.
 
    If this variable is unset the site still builds — the contact section falls

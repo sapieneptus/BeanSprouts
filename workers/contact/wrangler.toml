@@ -7,7 +7,7 @@ workers_dev = false
 # Exact origin(s) allowed to post to this Worker. Comma-separated, no trailing
 # slash. Add your Pages preview domain here too if you want the form to work
 # on previews.
-ALLOWED_ORIGIN = "https://beansprouts.dk"
+ALLOWED_ORIGIN = "https://bean-sprouts.com"
 
 # The PRIVATE repository that receives contact submissions as issues.
 # Do not point this at a public repo — issue bodies contain sender names and
@@ -23,8 +23,8 @@ GITHUB_REPO = "contact-inbox"
 # Pages for matching paths on the same zone. Requires the domain to be on this
 # Cloudflare account.
 # [[routes]]
-# pattern = "beansprouts.dk/api/contact"
-# zone_name = "beansprouts.dk"
+# pattern = "bean-sprouts.com/api/contact"
+# zone_name = "bean-sprouts.com"
 
 # Optional per-IP rate limiting. Create the namespace, paste the id, uncomment.
 #   npx wrangler kv namespace create RATE_LIMIT
