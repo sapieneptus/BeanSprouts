@@ -348,10 +348,16 @@ const hasEndpoint = endpoint.length > 0;
           return;
         }
 
-        const detail = await response.json().catch(() => null);
+        // Only 400 and 429 carry something the visitor can act on. Anything
+        // else is a fault on my side, and its message belongs in logs, not in
+        // front of someone who just wanted to send a message.
+        const actionable = response.status === 400 || response.status === 429;
+        const detail = actionable
+          ? await response.json().catch(() => null)
+          : null;
         setStatus(
           detail?.error ??
-            "That didn't go through. Please try again, or email me directly.",
+            "That didn't go through — something's wrong on my side. Please email me directly.",
           "error",
         );
       } catch {

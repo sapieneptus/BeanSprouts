@@ -74,6 +74,12 @@ export default {
     // Cross-origin browsers always send Origin on POST; a mismatch is either a
     // misconfiguration or someone else's page using our endpoint.
     if (!allowed) {
+      // Almost always a stale deploy: [vars] are baked in at deploy time, so
+      // editing ALLOWED_ORIGIN in wrangler.toml does nothing until you deploy
+      // again. Log both sides so `wrangler tail` names the mismatch.
+      console.warn(
+        `Rejected origin ${origin || "(none)"}; ALLOWED_ORIGIN is ${env.ALLOWED_ORIGIN}`,
+      );
       return json({ error: "Origin not allowed." }, 403, "");
     }
 

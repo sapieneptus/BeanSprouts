@@ -129,6 +129,13 @@ so `/api/contact` hits the Worker and everything else hits the site.
 Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**,
 pick this repository, then:
 
+> **Make sure you're in the Pages flow, not Workers.** The Create screen defaults
+> to Workers and the Pages entry is behind small secondary links. You're in the
+> wrong one if the build settings show a **Deploy command** (`npx wrangler
+> versions upload`) and no **Build output directory** — a Workers project ignores
+> the settings below, runs the build at the repo root, and fails with
+> `ENOENT ... /opt/buildhome/repo/package.json`.
+
 | Setting | Value |
 |---|---|
 | Production branch | `main` |
@@ -153,13 +160,94 @@ Deploy. You'll get a `*.pages.dev` URL to check before the domain is live.
 > it to `main` before the first production build, or set the production branch
 > to match.
 
-## 7. Point the domain at it
+## 7. Point the domain at it (DNS)
+
+**The nameservers must be on Cloudflare before this works.** If your domain's
+DNS is still served elsewhere — Route 53, your registrar's default, anywhere —
+stop and move it first. This isn't a preference; see the apex note below.
 
 In the Pages project: **Custom domains → Set up a custom domain** →
-`bean-sprouts.com`. Repeat for `www.bean-sprouts.com` if you want it. Cloudflare
-adds the DNS records itself when the zone is already on your account.
+`bean-sprouts.com`. Repeat for `www.bean-sprouts.com`. Cloudflare writes the DNS
+records itself when the zone is on your account. Wait for the certificate,
+usually a few minutes.
 
-Wait for the certificate to be issued — usually a few minutes.
+> **Cloudflare warns you about missing records before you get here.** "Visitors
+> cannot reach bean-sprouts.com" appears the moment the zone exists and is
+> empty. Expected. Attaching the custom domains clears it — adding records by
+> hand to silence it is the wrong fix.
+
+### Why the apex needs Cloudflare's DNS
+
+Pages has no fixed IP, so there's nothing to put in an `A` record. The target is
+a hostname (`<project>.pages.dev`), which means a `CNAME` — and **a CNAME is
+illegal at a zone apex**. The apex must carry `SOA` and `NS` records, and a
+CNAME cannot coexist with any other record on the same name. Every compliant DNS
+server refuses it.
+
+Route 53 will reject it explicitly:
+
+```
+RRSet of type CNAME with DNS name bean-sprouts.com. is not permitted at apex
+```
+
+Cloudflare gets around this with **CNAME flattening**: it resolves the target
+and answers with `A`/`AAAA` records at the apex, so nothing illegal is ever
+published. Route 53's nearest equivalent, an **Alias** record, only targets AWS
+resources — CloudFront, ELB, S3 website endpoints, API Gateway — and cannot
+point at `pages.dev`. So there is no way to serve the apex from Route 53.
+
+Moving nameservers: Route 53 → **Registered domains** → your domain → edit
+nameservers, replace the four AWS ones with the two Cloudflare gave you.
+Cloudflare's zone-add scans and imports existing records, but check they all
+came across before cutting over. Afterwards, delete the unused Route 53 hosted
+zone — it bills $0.50/month regardless of traffic.
+
+`www` is not the apex, so a CNAME there is legal anywhere. That's a usable
+stopgap while nameservers propagate.
+
+## 7b. Email records: SPF, DKIM, DMARC
+
+Cloudflare warns that "email cannot reach @bean-sprouts.com addresses and they
+could be spoofed," and offers a prefilled restrictive set. Its description —
+"advise receiving mail servers to drop all incoming email sent from your
+domain" — is badly worded and reads far more alarming than it is.
+
+**Two independent things:**
+
+| Concern | Governed by | Direction |
+|---|---|---|
+| Can people send mail **to** you at the domain? | `MX` records | Inbound |
+| Can someone send mail **claiming to be** the domain? | SPF, DKIM, DMARC | Outbound |
+
+The preset only touches the second. It says "no server is authorised to send as
+this domain, reject anything claiming to be." It cannot stop anyone emailing
+you — that's MX, which the preset doesn't set.
+
+| Record | Meaning |
+|---|---|
+| `TXT @` → `v=spf1 -all` | No server may send as this domain |
+| `TXT *._domainkey` → `v=DKIM1; p=` | Empty key = revoked. The wildcard covers every selector |
+| `TXT _dmarc` → `v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;` | Reject failures outright, strictly, subdomains included |
+
+While the site publishes an address on another domain and sends no mail from
+this one, the preset is exactly right. Leave the reporting address blank unless
+you want the XML aggregate reports; you can add `rua=` later.
+
+**MX:** not needed while no address at this domain is published. To be explicit
+rather than merely silent, add a "null MX" (RFC 7505) — priority `0`, content
+`.` — which formally declares the domain accepts no mail.
+
+### If you want hello@bean-sprouts.com
+
+**Email → Email Routing** forwards it to your real inbox, free, and adds the MX
+records for you. Don't add the null MX if you go this way, and expect Cloudflare
+to prompt you about the SPF record it conflicts with.
+
+Routing only lets you **receive**. Sending as that address means replacing
+`-all` with an include list naming your provider, plus real DKIM keys from them.
+
+**Publish the address on the site only once routing is verified** — a published
+address that bounces is worse than no address.
 
 ## 8. Verify before you tell anyone
 
@@ -192,7 +280,9 @@ GITHUB_TOKEN`, redeploy the Worker, then revoke the old token.
 | Symptom | Cause |
 |---|---|
 | Contact section shows an email link, not a form | `PUBLIC_CONTACT_ENDPOINT` unset at build time — set it and **rebuild** |
-| Form returns "Origin not allowed" | `ALLOWED_ORIGIN` doesn't exactly match the site origin. No trailing slash; `www.` is a different origin |
+| Form returns "Origin not allowed" | `ALLOWED_ORIGIN` doesn't match. **`[vars]` are baked in at deploy time — editing `wrangler.toml` does nothing until you `wrangler deploy` again.** Also: no trailing slash, and `www.` is a separate origin. `npx wrangler tail` logs both sides |
+| Build fails with `ENOENT ... /opt/buildhome/repo/package.json` | Root directory isn't `site`, or you created a Workers project instead of a Pages one |
+| Route 53 refuses a CNAME at the apex | Expected — see step 7. The nameservers have to move to Cloudflare |
 | Form returns 502 | Token expired, lost its Issues permission, or `GITHUB_REPO` is wrong. `npx wrangler tail` shows the GitHub error |
 | Submissions silently succeed but no issue appears | You tripped a bot trap — the Worker fakes success for a filled honeypot or a sub-2.5s submit. Fill the form like a person |
 | Build fails on Cloudflare, works locally | Root directory isn't `site`, or Node version differs. Set `NODE_VERSION=20` in the Pages env vars |
