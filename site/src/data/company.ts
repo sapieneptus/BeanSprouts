@@ -41,8 +41,11 @@ export const company = {
   /** Used for page metadata and social previews. */
   metaDescription:
     "BeanSprouts is a small independent software studio in Denmark, building simple, honest, human-focused software to solve real problems.",
-  /** TODO: confirm this is the address you want published. */
-  email: "chris@chrisf.io",
+  /**
+   * No email address is published anywhere on the site, on purpose — a
+   * scrapeable mailto: is a spam magnet. The contact form is the only route
+   * in, and it delivers to a private issue tracker. Don't reintroduce one.
+   */
   founder: {
     /** TODO: full name as you'd like it to appear. */
     name: "Chris",
@@ -122,29 +125,23 @@ export const projects: Project[] = [
   },
   {
     name: "Sparr",
-    // TODO: replace this placeholder with a real one-liner.
-    tagline: "TODO — one line on what Sparr is.",
-    // TODO: replace with two or three real sentences.
+    tagline: "Language training partner that embraces the hard parts.",
     description:
-      "TODO — what does it do, and who is it for? Two or three plain sentences is plenty. Until this is filled in, this card is intentionally vague rather than made up.",
+      "Sparr is a language learning companion focused primarily on speaking. It's targetted at CEFR B2-ish level learners who know a lot of vocab and grammer structures but need more training to survive a real conversation: thinking on your feet, figuring out how to describe a word you don't know, dealing with an impatient speaker etc. Leveraging AI for dialog generation and exercises, the app provides hyper-personalized practice instead of a generic cirriculum so you gain confidence for real situations.",
     status: "in-development",
   },
   {
     name: "Little Beans",
-    // TODO: replace this placeholder with a real one-liner.
-    tagline: "TODO — one line on what Little Beans is.",
-    // TODO: replace with two or three real sentences.
+    tagline: "A suite of minigames for my own children's education",
     description:
-      "TODO — what does it do, and who is it for? Two or three plain sentences is plenty. Until this is filled in, this card is intentionally vague rather than made up.",
+      "A series of micro games tailored to my own children's specific needs. Nowadays you can find a multitude of children's apps available, mostly with subscriptions or in-app purchases - but with Little Beans I can develop, observe, and revise to ensure the games are both fun and educational in the way my children specifically need (for example, a game to help my son learn multiples of 10). I am unlikely to publish this one.",
     status: "in-development",
   },
   {
     name: "BeanTray",
-    // TODO: replace this placeholder with a real one-liner.
-    tagline: "TODO — one line on what BeanTray is.",
-    // TODO: replace with two or three real sentences.
+    tagline: "A modular hardware control extension for tablets",
     description:
-      "TODO — what does it do, and who is it for? Two or three plain sentences is plenty. Until this is filled in, this card is intentionally vague rather than made up.",
+      "Building on the joy of a 2/3/4 year old's love for \"pushing the button\" whenever we're at an elevator or crosswalk, this device will allow children to explore real tactile controls - buttons, knobs, levers etc. - directly integrated to a tablet. The north star here is an SDK that allows developers to easily integrate BeanTray controls to any game/app, so that for example a child could swap in a real wheel to play a racing game. The tray itself will be modular to make the system as extensible as possible while letting children enjoy the experience of \"building\" their controller.",
     status: "in-development",
   },
 ];
@@ -160,6 +157,7 @@ export const ai = {
   body: [
     "I've built software professionally for over ten years, from early-stage startups to global infrastructure. A lot of those hours went to work that was never the point: getting a button to line up, dealing with date arithmatic, chasing an off-by-one. That's accidental complexity; i.e. difficulty that comes from the tools rather than from the problem. I count those minutes as lost, not as craft.",
     "So I use AI heavily for that layer, on purpose. What it doesn't get to do is decide what to build, who it's for, or whether it's good enough to ship.",
+    "Language generation is a key strengh of AI, and I use that heavily for Sparr. While it is not a full replacement for a real human language trainer, you can get a long way with it for learning and I believe this is a fair application - a serious language student should use both AI tools and leverage authentic conversations for maximum effectiveness.",
     "In terms of art and assets, the line I draw is that AI-art (both visual and audio) is a useful, high-fidelity placeholder, but final assets must be produced by a human artist before any sales are made.",
     "I believe this balance allows me maximum development velocity while also preserving the value and economy of human artists."
   ],
@@ -168,7 +166,7 @@ export const ai = {
       verdict: "yes" as const,
       label: "Where AI helps",
       title: "The accidental complexity",
-      body: "Alignment, boilerplate, date arithmetic, simple copy, generating examples from a template etc. Necessary work, but not the work that makes a product good. Handing it off buys back the hours that go into the parts that do.",
+      body: "Alignment, boilerplate, date arithmetic, simple copy, generating examples from a template etc. Necessary work, but not the work that makes a product good. Handing it off buys back the hours that go into the parts that do. I also lean on AI for general styling/theming of interfaces based on requirements I set.",
     },
     {
       verdict: "no" as const,
@@ -180,7 +178,7 @@ export const ai = {
       verdict: "line" as const,
       label: "Where it stops",
       title: "Art that goes to market",
-      body: "This is the hard line. Generative tools are genuinely good for prototyping; a rough visual tells you more about whether a screen works than a grey box does. But the prototype is where it stops. Anything visual that reaches a customer is commissioned from a real artist, working in their own style, with my mock-up as a brief and nothing more.",
+      body: "This is the hard line. Generative tools are genuinely good for prototyping; a rough visual tells you more about whether a screen works than a grey box does. But the prototype is where it stops. Art that reaches a customer is commissioned from a real artist, working in their own style, with my mock-up as a brief and nothing more.",
     },
   ],
   closing:
@@ -194,16 +192,17 @@ export const ai = {
 export const about = {
   heading: "About",
   /**
-   * Drop a photo at site/public/portrait.jpg (square, ~600×600) and set this to
-   * "/portrait.jpg". A real face does more for trust than anything else on the
-   * page. Left empty, the ridgeline motif stands in.
+   * Square, ~600×600, in site/public. A real face does more for trust than
+   * anything else on the page, so this renders twice: small in the hero, where
+   * it's the first thing a visitor sees, and full size here. Left empty, the
+   * hero drops the avatar and the ridgeline motif stands in below.
    */
-  portrait: "",
+  portrait: "/portrait.jpg",
   portraitAlt: `${company.founder.name}, founder of ${company.name}`,
   body: [
-    `I'm ${company.founder.name}, and ${company.name} is me. There's no team behind the "we" because there isn't a "we" — it's one person who has been building software for a long time and wanted to build some of it properly, on my own terms.`,
-    "That means the products come out slower than they would elsewhere. It also means there's nobody to ask me to add tracking, or to make cancelling harder, or to ship something before it's ready. The trade seems worth it.",
-    "If you're wondering whether something here would work for you, ask me directly. You'll get a real answer from the person who built it.",
+    `I'm ${company.founder.name}, and ${company.name} is me. There's no team behind the "we" because there isn't a "we"; it's one person who has been building software for a long time and wanted to build some of it on my own terms.`,
+    "That means the products come out slower than they would elsewhere. It also means there's nobody to ask me to add tracking, or to optimize revenue, or to ship something before it's ready.",
+    "If you're wondering whether something here would work for you, ask me directly.",
   ],
 };
 
@@ -212,9 +211,10 @@ export const contact = {
   lede: "Questions, bug reports, ideas, or just to say hello — this goes straight to me, and I read everything.",
   /**
    * The Cloudflare Worker that receives the form. Set PUBLIC_CONTACT_ENDPOINT in
-   * your Cloudflare Pages build settings. Empty means the form falls back to a
-   * plain mailto: link, so the page is never broken — just less convenient.
-   * See /workers/contact for deployment.
+   * your Cloudflare Pages build settings. Empty means the contact panel says so
+   * rather than rendering a form that posts nowhere — and since no email
+   * address is published, that build leaves visitors no way to reach you, so
+   * treat an empty endpoint as a broken deploy. See /workers/contact.
    */
   endpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT ?? "",
 };

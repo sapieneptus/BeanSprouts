@@ -35,7 +35,7 @@ const TOPIC_LABELS: Record<Topic, string> = {
 const LIMITS = {
   name: 100,
   email: 254,
-  message: 5000,
+  message: 2000,
   minMessage: 10,
   /** Requests allowed per IP per window. */
   perWindow: 5,
@@ -133,7 +133,7 @@ export default {
     const created = await createIssue(env, { name, email, topic, message });
     if (!created) {
       return json(
-        { error: "Something broke on my side. Please email me directly instead." },
+        { error: "Something broke on my side. Please try again in a few minutes." },
         502,
         origin,
       );
