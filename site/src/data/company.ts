@@ -104,11 +104,11 @@ export const commitments = {
   intro:
     "Principles are easy to write. These are the specific things I commit to, so you can hold me to them:",
   items: [
-    "Treat end users the way I'd want to be treated",
-    "Only charge for real value",
+    "Treat end users the way I'd want to be treated.",
+    "Only charge for real value.",
     "Your data is never sold, rented, or shared with third-party brokers.",
     "No dark patterns. Leaving is always as easy as arriving.",
-    "No account required unless the product genuinely can't work without one.",
+    "Tools should be as simple and intuitive as they can afford to be.",
     "If a product ever shuts down, you get fair notice and a way to take your data with you.",
   ],
 };
@@ -156,11 +156,7 @@ export const ai = {
   lede: "It's a fair thing to want to know about any software company right now, so here's a straight answer rather than a policy page.",
   body: [
     "I've built software professionally for over ten years, from early-stage startups to global infrastructure. A lot of those hours went to work that was never the point: getting a button to line up, dealing with date arithmatic, chasing an off-by-one. That's accidental complexity; i.e. difficulty that comes from the tools rather than from the problem. I count those minutes as lost, not as craft.",
-    "So I use AI heavily for that layer; the donkey work, CSS styling (including the \"mountains\" on this page), generating good placeholders, rapid prototyping so I can evaluate whether a concept works before sinking time to real assets.",
-    "It is a great tool for assessing correctness, initial security review, iterating on ideas; but my role and responsibility remains as the director and architect.",
-    "Language generation is a key strengh of AI, and I use that heavily for Sparr. While it is not a full replacement for a real human language trainer, you can get a long way with it for learning and I believe this is a fair application - a serious language student should use both AI tools and leverage authentic conversations for maximum effectiveness.",
-    "In terms of art and assets, the line I draw is that AI-art (both visual and audio) is a useful, high-fidelity placeholder, but final assets must be produced by a human artist before any sales are made.",
-    "I believe this balance allows me maximum development velocity while also preserving the value and economy of human artists."
+    "So I use AI heavily for that layer; the donkey work, simple CSS styling (including the \"mountains\" on this page), generating good placeholders, rapid prototyping so I can evaluate whether a concept works before sinking time to real assets.",
   ],
   stances: [
     {
