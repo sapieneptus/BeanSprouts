@@ -1,5 +1,5 @@
 ---
-import { hero, projects } from "../data/company";
+import { about, hero, projects } from "../data/company";
 import Ridgeline from "./Ridgeline.astro";
 
 const liveCount = projects.filter((p) => p.status === "live").length;
@@ -8,7 +8,20 @@ const buildingCount = projects.length - liveCount;
 
 <section class="hero" id="top">
   <div class="wrap hero__inner">
-    <p class="hero__eyebrow">{hero.eyebrow}</p>
+    <div class="hero__byline">
+      {about.portrait && (
+        <img
+          class="hero__avatar"
+          src={about.portrait}
+          alt={about.portraitAlt}
+          width="600"
+          height="600"
+          decoding="async"
+          fetchpriority="high"
+        />
+      )}
+      <p class="hero__eyebrow">{hero.eyebrow}</p>
+    </div>
     <h1 class="hero__heading">{hero.heading}</h1>
     <p class="hero__lede">{hero.lede}</p>
 
@@ -56,6 +69,37 @@ const buildingCount = projects.length - liveCount;
     display: grid;
     gap: 1.35rem;
     justify-items: start;
+  }
+
+  /* Face first, then the label it belongs to — the studio is one person, and
+     the top of the page should say so before the headline does. Stacked on
+     narrow screens: side by side there isn't room for the eyebrow, and it
+     wraps to a second line starting with the separator. */
+  .hero__byline {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 30em) {
+    .hero__byline {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.85rem;
+    }
+  }
+
+  /* Never lazy-loaded: it's above the fold. The intrinsic width/height on the
+     tag reserve the box, so the eyebrow doesn't jump when the file lands. */
+  .hero__avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    flex: none;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
   }
 
   .hero__eyebrow {

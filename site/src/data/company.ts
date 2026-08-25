@@ -192,11 +192,12 @@ export const ai = {
 export const about = {
   heading: "About",
   /**
-   * Drop a photo at site/public/portrait.jpg (square, ~600×600) and set this to
-   * "/portrait.jpg". A real face does more for trust than anything else on the
-   * page. Left empty, the ridgeline motif stands in.
+   * Square, ~600×600, in site/public. A real face does more for trust than
+   * anything else on the page, so this renders twice: small in the hero, where
+   * it's the first thing a visitor sees, and full size here. Left empty, the
+   * hero drops the avatar and the ridgeline motif stands in below.
    */
-  portrait: "",
+  portrait: "/portrait.jpg",
   portraitAlt: `${company.founder.name}, founder of ${company.name}`,
   body: [
     `I'm ${company.founder.name}, and ${company.name} is me. There's no team behind the "we" because there isn't a "we"; it's one person who has been building software for a long time and wanted to build some of it on my own terms.`,
