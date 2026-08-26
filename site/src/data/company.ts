@@ -69,7 +69,6 @@ export const hero = {
 export const mission = {
   heading: "Small problems, taken seriously",
   body: [
-    "Most studios open with a sweeping vision. Mine is narrower than that, and I'd rather state it plainly than dress it up.",
     "I build software for small, focused problems. Not small as in unimportant: small as in specific. For example, a paper stamp rally at a convention can be a real headache for the people running one, yet nothing more than a rounding error to anyone with a boardroom.",
     "Where something comparable already exists at scale, the bet is simple: a tool built for one niche beats a general one stretched to cover it.",
     "So the projects look unrelated, and they are. What connects them is the size of problem I'm willing to chase, and the standard I hold every one of them to.",
@@ -205,7 +204,7 @@ export const about = {
 
 export const contact = {
   heading: "Get in touch",
-  lede: "Questions, bug reports, ideas, or just to say hello — this goes straight to me, and I read everything.",
+  lede: "Questions, bug reports, ideas, or just to say hello.",
   /**
    * The Cloudflare Worker that receives the form. Set PUBLIC_CONTACT_ENDPOINT in
    * your Cloudflare Pages build settings. Empty means the contact panel says so
